@@ -410,3 +410,118 @@ section {
     --text-secondary: #333333;
   }
 }
+
+/* src/index.css - Add responsive utilities */
+
+/* Mobile first responsive utilities */
+@layer utilities {
+  .container-custom {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+  }
+
+  /* Responsive text sizes */
+  .text-responsive-hero {
+    @apply text-3xl sm:text-4xl md:text-5xl lg:text-6xl;
+  }
+
+  .text-responsive-title {
+    @apply text-2xl sm:text-3xl md:text-4xl;
+  }
+
+  .text-responsive-subtitle {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  /* Responsive spacing */
+  .section-padding {
+    @apply py-12 sm:py-16 md:py-20 lg:py-24;
+  }
+
+  .section-padding-sm {
+    @apply py-8 sm:py-10 md:py-12;
+  }
+
+  /* Grid responsive */
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6;
+  }
+
+  .grid-responsive-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+
+  .grid-responsive-4 {
+    @apply grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6;
+  }
+}
+
+/* Mobile menu improvements */
+@media (max-width: 1024px) {
+  .lg\:hidden {
+    display: flex !important;
+  }
+}
+
+/* Small screen adjustments */
+@media (max-width: 640px) {
+  .container-custom {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Touch-friendly dropdown for mobile */
+@media (max-width: 768px) {
+  .dropdown-touch {
+    cursor: pointer;
+  }
+}
+
+/* src/index.css - Add article content styles */
+
+.article-content {
+  font-family: 'Inter', sans-serif;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.article-content h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #eab308;
+  padding-left: 1rem;
+}
+
+.article-content h3 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-content p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.article-content ul,
+.article-content ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.article-content li {
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.article-content strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}

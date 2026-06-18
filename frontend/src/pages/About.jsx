@@ -51,7 +51,6 @@ class AboutPage extends BasePage {
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="max-w-3xl">
               <span className="text-yellow-500 font-semibold text-sm tracking-wider uppercase mb-4 block">About Vaahan International</span>
               <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">Premium Automotive <br /><span className="text-yellow-500">Service Excellence</span></h1>
-              <p className="text-gray-300 text-lg max-w-2xl">With over a decade of experience in servicing luxury vehicles, we bring main dealer expertise at competitive prices.</p>
             </motion.div>
           </div>
         </section>

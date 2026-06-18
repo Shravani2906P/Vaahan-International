@@ -21,6 +21,8 @@ import ArticleDetail from './pages/ArticleDetail'
 import CompareCars from './pages/CompareCars'
 import CommonHeader from './components/CommonHeader'
 import CommonFooter from './components/CommonFooter'
+import CategoryArticle from './pages/CategoryArticle'
+import FeatureDetail from './pages/FeatureDetail'
 
 // ScrollToTop component
 const ScrollToTop = () => {
@@ -48,6 +50,7 @@ function App() {
               <Route path="/articles" element={<Articles />} />
               <Route path="/article/:slug" element={<ArticleDetail />} />
               <Route path="/compare-cars" element={<CompareCars />} />
+              <Route path="/category/:categoryId" element={<CategoryArticle />} />              <Route path="/feature/:categoryId/:featureId" element={<FeatureDetail />} />
             </Routes>
           </main>
           <CommonFooter />

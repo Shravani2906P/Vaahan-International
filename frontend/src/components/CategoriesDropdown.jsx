@@ -1,18 +1,7 @@
-// src/components/CategoriesDropdown.jsx
-/*
-================================================================================
-File Name : CategoriesDropdown.jsx
-Author : Tahseen Raza
-Created Date : 2025-01-15
-Description : Professional categories dropdown with left-side nested dropdown
-Company : Vaahan International
-Copyright : (c) 2026 Vaahan International. All rights reserved.
-================================================================================
-*/
+// src/components/CategoriesDropdown.jsx - Fixed for desktop dropdown with nested items
 
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-// import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
 
 const CategoriesDropdown = () => {
@@ -95,7 +84,6 @@ const CategoriesDropdown = () => {
     }
   }, [])
 
-  // Theme-aware text colors
   const textColor = isDark ? 'text-white' : 'text-gray-900'
   const subTextColor = isDark ? 'text-gray-400' : 'text-gray-500'
   const hoverBg = isDark ? 'hover:bg-dark-700' : 'hover:bg-gray-50'
@@ -112,34 +100,33 @@ const CategoriesDropdown = () => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Dropdown Trigger - Theme-aware */}
-      <button className={`flex items-center gap-1 font-semibold text-[16px] tracking-wide ${textColor} hover:text-yellow-500 transition-colors`}>
+      <button className={`flex items-center gap-1 font-semibold text-sm xl:text-[16px] tracking-wide ${textColor} hover:text-yellow-500 transition-colors`}>
         Categories
-        <svg className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className={`absolute top-full left-0 mt-1 w-72 rounded-lg shadow-xl border ${borderColor} z-50 ${bgColor}`}
+          className={`absolute top-full left-0 mt-1 w-56 sm:w-64 md:w-72 rounded-lg shadow-xl border ${borderColor} z-50 ${bgColor}`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
           {/* Compare Cars - Direct Link */}
           <Link
             to="/compare-cars"
-            className={`flex items-center justify-between px-4 py-3 ${hoverBg} transition-colors border-b ${borderColor}`}
+            className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${hoverBg} transition-colors border-b ${borderColor}`}
+            onClick={() => setIsOpen(false)}
           >
             <div>
-              <div className={`font-bold ${textColor}`}>Compare Cars</div>
-              <div className={`text-xs ${subTextColor}`}>Side by side car comparison</div>
+              <div className={`font-bold text-sm sm:text-base ${textColor}`}>Compare Cars</div>
+              <div className={`text-[10px] sm:text-xs ${subTextColor}`}>Side by side comparison</div>
             </div>
-            <span className="text-yellow-500 text-sm">→</span>
+            <span className="text-yellow-500 text-xs sm:text-sm">→</span>
           </Link>
 
-          {/* Categories */}
+          {/* Categories with Nested Items */}
           {categories.map((category, idx) => (
             <div
               key={idx}
@@ -147,36 +134,37 @@ const CategoriesDropdown = () => {
               onMouseEnter={() => handleCategoryMouseEnter(category.name)}
               onMouseLeave={handleCategoryMouseLeave}
             >
-              <div className={`flex items-center justify-between px-4 py-3 ${hoverBg} cursor-pointer transition-colors`}>
+              <div className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${hoverBg} cursor-pointer transition-colors`}>
                 <div>
-                  <div className={`font-semibold ${textColor}`}>{category.name}</div>
-                  <div className={`text-xs ${subTextColor}`}>{category.articles.length} articles</div>
+                  <div className={`font-semibold text-sm sm:text-base ${textColor}`}>{category.name}</div>
+                  <div className={`text-[10px] sm:text-xs ${subTextColor}`}>{category.articles.length} articles</div>
                 </div>
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
 
-              {/* Submenu - Now opens on the LEFT side */}
+              {/* Nested Submenu - Opens on Left */}
               {activeCategory === category.name && (
                 <div
-                  className={`absolute top-0 right-full mr-0 w-80 rounded-lg shadow-xl border ${borderColor} z-50 ${subBgColor}`}
+                  className={`absolute top-0 right-full mr-0 w-56 sm:w-64 md:w-80 rounded-lg shadow-xl border ${borderColor} z-50 ${subBgColor}`}
                   style={{ left: 'auto', right: '100%' }}
                   onMouseEnter={() => handleSubmenuMouseEnter(category.name)}
                   onMouseLeave={handleCategoryMouseLeave}
                 >
                   <div className="py-2">
-                    <div className={`px-4 py-2 ${headerBg} border-b ${borderColor}`}>
-                      <span className={`font-semibold ${textColor}`}>{category.name}</span>
-                      <span className={`text-xs ${subTextColor} ml-2`}>({category.articles.length})</span>
+                    <div className={`px-3 sm:px-4 py-1.5 sm:py-2 ${headerBg} border-b ${borderColor}`}>
+                      <span className={`font-semibold text-sm sm:text-base ${textColor}`}>{category.name}</span>
+                      <span className={`text-[10px] sm:text-xs ${subTextColor} ml-2`}>({category.articles.length})</span>
                     </div>
                     {category.articles.map((article, articleIdx) => (
                       <Link
                         key={articleIdx}
                         to={`/article/${article.slug}`}
-                        className={`block px-4 py-2 ${subHoverBg} transition-colors`}
+                        className={`block px-3 sm:px-4 py-1.5 sm:py-2 ${subHoverBg} transition-colors`}
+                        onClick={() => setIsOpen(false)}
                       >
-                        <span className={`text-sm ${textColor} hover:text-yellow-500`}>
+                        <span className={`text-xs sm:text-sm ${textColor} hover:text-yellow-500`}>
                           {article.title}
                         </span>
                       </Link>
