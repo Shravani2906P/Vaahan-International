@@ -250,6 +250,23 @@ class HomePage extends BasePage {
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30"></div>
             </div>
           ))}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              minWidth: '100%',
+              minHeight: '100%',
+            }}
+          >
+            <source src="/Car_Video.mp4" type="video/mp4" />
+          </video>
         </div>
 
         {/* Navigation Arrows */}
