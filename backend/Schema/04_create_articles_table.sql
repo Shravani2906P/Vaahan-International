@@ -2,15 +2,13 @@
 -- File Name : 04_create_articles_table.sql
 -- Author : Tahseen Raza
 -- Created Date : 2026-06-22
--- Description : Articles table for storing blog posts and reviews
+-- Description : Articles table for storing blog posts and reviews (MongoDB to PostgreSQL)
 -- Company : Vaahan International
 -- Copyright : (c) 2026 Vaahan International. All rights reserved.
 -- ================================================================================
 
--- Drop table if exists (for clean setup)
 DROP TABLE IF EXISTS articles CASCADE;
 
--- Create articles table
 CREATE TABLE articles (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -36,7 +34,6 @@ CREATE TABLE articles (
     published_at TIMESTAMP
 );
 
--- Add comments for documentation
 COMMENT ON TABLE articles IS 'Stores articles, reviews, and blog posts';
 COMMENT ON COLUMN articles.id IS 'Unique identifier for the article';
 COMMENT ON COLUMN articles.title IS 'Article title';
@@ -53,15 +50,14 @@ COMMENT ON COLUMN articles.tags IS 'Array of tags for search and filtering';
 COMMENT ON COLUMN articles.status IS 'Article status (published, coming-soon, draft)';
 COMMENT ON COLUMN articles.seo_title IS 'SEO optimized title';
 COMMENT ON COLUMN articles.seo_description IS 'SEO meta description';
-COMMENT ON COLUMN articles.published_at IS 'Actual publication timestamp';
 
--- Create indexes for performance
+-- Indexes for performance
 CREATE INDEX idx_articles_slug ON articles(slug);
 CREATE INDEX idx_articles_category ON articles(category);
 CREATE INDEX idx_articles_status ON articles(status);
 CREATE INDEX idx_articles_created_at ON articles(created_at DESC);
 
--- Create full-text search index
+-- Full-text search index
 CREATE INDEX idx_articles_search ON articles 
     USING GIN (to_tsvector('english', 
         COALESCE(title, '') || ' ' || 
@@ -69,7 +65,7 @@ CREATE INDEX idx_articles_search ON articles
         COALESCE(array_to_string(tags, ' '), '')
     ));
 
--- Create trigger to auto-update updated_at
+-- Trigger to auto-update updated_at
 CREATE TRIGGER update_articles_updated_at 
     BEFORE UPDATE ON articles 
     FOR EACH ROW 

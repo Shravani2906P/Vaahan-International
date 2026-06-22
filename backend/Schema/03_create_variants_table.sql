@@ -2,15 +2,13 @@
 -- File Name : 03_create_variants_table.sql
 -- Author : Tahseen Raza
 -- Created Date : 2026-06-22
--- Description : Variants table for car variants with detailed scores
+-- Description : Variants table for car variants with detailed scores (MongoDB to PostgreSQL)
 -- Company : Vaahan International
 -- Copyright : (c) 2026 Vaahan International. All rights reserved.
 -- ================================================================================
 
--- Drop table if exists (for clean setup)
 DROP TABLE IF EXISTS variants CASCADE;
 
--- Create variants table with JSONB for scores
 CREATE TABLE variants (
     id SERIAL PRIMARY KEY,
     model_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
@@ -22,20 +20,19 @@ CREATE TABLE variants (
     -- Engine & Performance
     engine VARCHAR(100),
     displacement VARCHAR(50),
-    fuel_type VARCHAR(20) CHECK (fuel_type IN ('Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG', 'Petrol+CNG')),
-    transmission VARCHAR(20) CHECK (transmission IN ('Manual', 'Automatic', 'AMT', 'CVT', 'DCT', 'EV', 'iMT')),
+    fuel_type VARCHAR(20) CHECK (fuel_type IN ('Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG', 'N/A')),
+    transmission VARCHAR(20) CHECK (transmission IN ('Manual', 'Automatic', 'AMT', 'CVT', 'DCT', 'EV', 'N/A')),
     power VARCHAR(50),
     torque VARCHAR(50),
     mileage VARCHAR(50),
-    driving_range VARCHAR(50),
     
-    --  MAIN SCORE - Overall rating
+    -- MAIN SCORE - Overall rating
     overall_score NUMERIC(3,1) DEFAULT 0 CHECK (overall_score >= 0 AND overall_score <= 10),
     
-    --  CATEGORY SCORES - JSONB format (pre-calculated)
+    -- CATEGORY SCORES - JSONB format (pre-calculated)
     scores JSONB DEFAULT '{}'::jsonb,
     
-    --  FACTOR SCORES - JSONB format (detailed breakdown)
+    -- FACTOR SCORES - JSONB format (detailed breakdown)
     factor_scores JSONB DEFAULT '{}'::jsonb,
     
     -- Specifications (flexible key-value pairs)
@@ -46,7 +43,6 @@ CREATE TABLE variants (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add comments for documentation
 COMMENT ON TABLE variants IS 'Stores car variants with detailed scores and specifications';
 COMMENT ON COLUMN variants.id IS 'Unique identifier for the variant';
 COMMENT ON COLUMN variants.model_id IS 'Foreign key reference to models table';
@@ -66,21 +62,20 @@ COMMENT ON COLUMN variants.scores IS 'JSONB object containing category scores';
 COMMENT ON COLUMN variants.factor_scores IS 'JSONB object containing detailed factor scores';
 COMMENT ON COLUMN variants.specifications IS 'JSONB object for flexible specifications';
 
--- Create indexes for performance
+-- Indexes for performance
 CREATE INDEX idx_variants_model_id ON variants(model_id);
 CREATE INDEX idx_variants_overall_score ON variants(overall_score DESC);
 CREATE INDEX idx_variants_fuel_type ON variants(fuel_type);
 CREATE INDEX idx_variants_transmission ON variants(transmission);
 
--- Create GIN indexes for JSONB queries
+-- GIN indexes for JSONB queries
 CREATE INDEX idx_variants_scores ON variants USING GIN (scores);
 CREATE INDEX idx_variants_factor_scores ON variants USING GIN (factor_scores);
 
--- Add foreign key constraint
 ALTER TABLE variants ADD CONSTRAINT fk_variants_model 
     FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE;
 
--- Create trigger to auto-update updated_at
+-- Trigger to auto-update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
