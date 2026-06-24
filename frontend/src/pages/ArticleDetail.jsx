@@ -13,49 +13,71 @@ Copyright : (c) 2025 Vaahan International. All rights reserved.
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import { allArticles } from '../data/articlesData'
+import { getArticleBySlug, getAllArticles } from '../data/articlesData'
 
 const ArticleDetail = () => {
   const { slug } = useParams()
   const { isDark } = useTheme()
   const [article, setArticle] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [relatedArticles, setRelatedArticles] = useState([])
 
   useEffect(() => {
-    const found = allArticles.find(a => a.slug === slug)
-    setArticle(found || null)
-    setLoading(false)
+    const fetchArticle = async () => {
+      try {
+        setLoading(true)
+        
+        // Get article by slug from API
+        const articleData = await getArticleBySlug(slug)
+        setArticle(articleData || null)
+        
+        if (articleData) {
+          // Get related articles (same category, different slug)
+          const allArticlesData = await getAllArticles()
+          const related = allArticlesData
+            .filter(a => a.category === articleData.category && a.slug !== slug)
+            .slice(0, 3)
+          setRelatedArticles(related)
+        }
+      } catch (error) {
+        console.error('❌ Error fetching article:', error)
+        setArticle(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchArticle()
   }, [slug])
 
   if (loading) {
     return (
-      <div className="container-custom py-32 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
-        <p className={`mt-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Loading article...</p>
+      <div className={`min-h-screen flex items-center justify-center pt-20 ${isDark ? 'bg-dark-950' : 'bg-gray-50'}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto"></div>
+          <p className={`mt-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            Loading article...
+          </p>
+        </div>
       </div>
     )
   }
 
   if (!article) {
     return (
-      <div className="container-custom py-32 text-center">
-        <div className="max-w-md mx-auto">
+      <div className={`min-h-screen flex items-center justify-center pt-20 ${isDark ? 'bg-dark-950' : 'bg-gray-50'}`}>
+        <div className="text-center max-w-md mx-auto px-4">
           <div className="text-6xl mb-6">🔍</div>
           <h1 className={`text-3xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Article Not Found</h1>
-          <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>The article you're looking for doesn't exist or has been moved.</p>
-          <Link to="/articles" className="bg-yellow-500 text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors inline-block">
+          <p className={`mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            The article you're looking for doesn't exist or has been moved.
+          </p>
+          <Link 
+            to="/articles" 
+            className="bg-yellow-500 text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors inline-block"
+          >
             Browse All Articles
           </Link>
-          <div className="mt-8 text-left">
-            <h3 className={`font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-800'}`}>Available Articles:</h3>
-            <div className="space-y-2">
-              {allArticles.map(a => (
-                <Link key={a.id} to={`/article/${a.slug}`} className="block text-yellow-500 hover:text-yellow-600 transition-colors">
-                  • {a.title}
-                </Link>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     )
@@ -148,14 +170,14 @@ const ArticleDetail = () => {
       </section>
 
       {/* Related Articles Section */}
-      <section className={`py-8 sm:py-12 md:py-16 transition-colors duration-300 ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
-        <div className="container-custom">
-          <h2 className={`text-xl sm:text-2xl font-bold mb-6 sm:mb-8 ${isDark ? 'text-white' : 'text-gray-900'} px-4 sm:px-0`}>Related Articles</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 px-4 sm:px-0">
-            {allArticles
-              .filter(a => a.category === article.category && a.id !== article.id)
-              .slice(0, 3)
-              .map((related) => (
+      {relatedArticles.length > 0 && (
+        <section className={`py-8 sm:py-12 md:py-16 transition-colors duration-300 ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
+          <div className="container-custom">
+            <h2 className={`text-xl sm:text-2xl font-bold mb-6 sm:mb-8 ${isDark ? 'text-white' : 'text-gray-900'} px-4 sm:px-0`}>
+              Related Articles
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 px-4 sm:px-0">
+              {relatedArticles.map((related) => (
                 <Link
                   key={related.id}
                   to={`/article/${related.slug}`}
@@ -182,9 +204,10 @@ const ArticleDetail = () => {
                   </div>
                 </Link>
               ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   )
 }

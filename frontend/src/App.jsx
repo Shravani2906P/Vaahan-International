@@ -1,4 +1,4 @@
-// src/App.jsx - Optional: Clean version without separate auth pages
+// src/App.jsx
 /*
 ================================================================================
 File Name : App.jsx
@@ -23,6 +23,7 @@ import CommonHeader from './components/CommonHeader'
 import CommonFooter from './components/CommonFooter'
 import CategoryArticle from './pages/CategoryArticle'
 import FeatureDetail from './pages/FeatureDetail'
+import Profile from './pages/Profile' // ADDED
 
 // ScrollToTop component
 const ScrollToTop = () => {
@@ -51,6 +52,7 @@ function App() {
             <Route path="/compare-cars" element={<CompareCars />} />
             <Route path="/category/:categoryId" element={<CategoryArticle />} />
             <Route path="/feature/:categoryId/:featureId" element={<FeatureDetail />} />
+            <Route path="/profile" element={<Profile />} /> {/* ADDED */}
           </Routes>
         </main>
         <CommonFooter />

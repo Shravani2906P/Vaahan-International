@@ -4,7 +4,7 @@
 File Name : AuthModal.jsx
 Author : Tahseen Raza
 Created Date : 2026-06-20
-Description : Authentication Modal with perfectly matched open & close animations
+Description : Authentication Modal with Email & Phone support - Styles Preserved
 Company : Vaahan International
 Copyright : (c) 2026 Vaahan International. All rights reserved.
 ================================================================================
@@ -13,16 +13,17 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
+import { api } from '../services/api'
 
 // Import step components
 import EmailStep from './auth/EmailStep'
-import PasswordStep from './auth/PasswordStep'
 import OTPStep from './auth/OTPStep'
 import ProfileStep from './auth/ProfileStep'
 
 const AuthModal = ({ isOpen, onClose, triggerRef }) => {
   const [step, setStep] = useState('email')
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
+  const [isEmail, setIsEmail] = useState(true)
   const [isExistingUser, setIsExistingUser] = useState(false)
   const [buttonPosition, setButtonPosition] = useState(null)
   const { isDark } = useTheme()
@@ -48,41 +49,62 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
     if (!isOpen) {
       const timer = setTimeout(() => {
         setStep('email')
-        setEmail('')
+        setIdentifier('')
+        setIsEmail(true)
         setIsExistingUser(false)
         setButtonPosition(null)
-      }, 1400) // Wait for full exit animation
+      }, 1400)
       return () => clearTimeout(timer)
     }
   }, [isOpen])
 
-  // Handle email submission
-  const handleEmailSubmit = (emailValue, isExisting) => {
-    setEmail(emailValue)
+  // Handle identifier submission
+  const handleIdentifierSubmit = (identifierValue, isExisting, isEmailValue) => {
+    setIdentifier(identifierValue)
+    setIsEmail(isEmailValue)
     setIsExistingUser(isExisting)
-    setStep(isExisting ? 'password' : 'otp')
+    setStep('otp')
   }
 
   // Handle OTP verification
-  const handleOTPVerify = () => {
-    setStep('profile')
-  }
-
-  // Handle password login
-  const handlePasswordLogin = () => {
-    onClose()
+  const handleOTPVerify = async (otpValue) => {
+    try {
+      const result = await api.verifyOTP(identifier, otpValue)
+      if (result.success) {
+        localStorage.setItem('token', result.token)
+        if (result.user.isNewUser) {
+          setStep('profile')
+        } else {
+          onClose()
+        }
+        return { success: true }
+      } else {
+        return { success: false, message: result.message }
+      }
+    } catch (error) {
+      return { success: false, message: 'Network error. Please try again.' }
+    }
   }
 
   // Handle profile creation
-  const handleProfileCreate = () => {
-    onClose()
+  const handleProfileCreate = async (profileData) => {
+    try {
+      const token = localStorage.getItem('token')
+      const result = await api.completeProfile(token, profileData)
+      if (result.success) {
+        onClose()
+        return { success: true }
+      } else {
+        return { success: false, message: result.message }
+      }
+    } catch (error) {
+      return { success: false, message: 'Network error. Please try again.' }
+    }
   }
 
   // Handle back navigation
   const handleBack = () => {
-    if (step === 'password') {
-      setStep('email')
-    } else if (step === 'otp') {
+    if (step === 'otp') {
       setStep('email')
     } else if (step === 'profile') {
       setStep('otp')
@@ -93,8 +115,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
   const getStepTitle = () => {
     switch(step) {
       case 'email': return 'Welcome Back'
-      case 'password': return 'Welcome Back'
-      case 'otp': return 'Verify Your Email'
+      case 'otp': return 'Verify Your Account'
       case 'profile': return 'Complete Your Profile'
       default: return ''
     }
@@ -103,9 +124,8 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
   // Get step subtitle
   const getStepSubtitle = () => {
     switch(step) {
-      case 'email': return 'Sign in to continue to your account'
-      case 'password': return `Signing in as ${email}`
-      case 'otp': return `Enter the 6-digit code sent to ${email}`
+      case 'email': return 'Sign in with email or mobile number'
+      case 'otp': return `Enter the 6-digit code sent to ${identifier}`
       case 'profile': return 'Just a few more details to get started'
       default: return ''
     }
@@ -115,7 +135,6 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
   const getStepIcon = () => {
     switch(step) {
       case 'email': return '👋'
-      case 'password': return '🔐'
       case 'otp': return '✉️'
       case 'profile': return '✨'
       default: return ''
@@ -130,7 +149,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
     return `${xPercent}% ${yPercent}%`
   }
 
-  // Calculate the offset for zoom out animation (move to button position)
+  // Calculate the offset for zoom out animation
   const getZoomOutOffset = () => {
     if (!buttonPosition) return { x: 0, y: 0 }
     
@@ -154,13 +173,13 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
     duration: 1.2,
   }
 
-  // SLOW EASING for closing - MATCHES the spring feel
+  // SLOW EASING for closing
   const closeEasing = {
     duration: 1.2,
-    ease: [0.22, 1, 0.36, 1], // Custom easing that mimics spring
+    ease: [0.22, 1, 0.36, 1],
   }
 
-  // Content transitions - SLOW for both
+  // Content transitions
   const contentTransition = {
     duration: 0.9,
     ease: [0.22, 1, 0.36, 1],
@@ -170,7 +189,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop - SLOW for both */}
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -180,7 +199,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
             onClick={onClose}
           />
           
-          {/* Modal Container - Centered */}
+          {/* Modal Container */}
           <motion.div
             ref={modalRef}
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
@@ -202,7 +221,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
               scale: 0.08,
               x: zoomOutOffset.x * 0.9,
               y: zoomOutOffset.y * 0.9,
-              transition: closeEasing, // SAME duration as open
+              transition: closeEasing,
             }}
             style={{
               transformOrigin: getTransformOrigin(),
@@ -230,7 +249,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                   scale: 0.8,
                   y: 40,
                   transition: {
-                    duration: 1.0, // SLOW - matches opening
+                    duration: 1.0,
                     ease: [0.22, 1, 0.36, 1],
                   }
                 }}
@@ -252,7 +271,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                   </svg>
                 </button>
 
-                {/* Header with icon - SLOW entrance and exit */}
+                {/* Header with icon */}
                 <div className={`px-6 pt-6 pb-2 ${
                   isDark ? 'text-white' : 'text-gray-900'
                 }`}>
@@ -290,7 +309,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                   </motion.div>
                 </div>
 
-                {/* Content - SLOW entrance and exit */}
+                {/* Content */}
                 <motion.div 
                   className="px-6 py-4"
                   initial={{ opacity: 0, y: 30 }}
@@ -307,21 +326,14 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                 >
                   {step === 'email' && (
                     <EmailStep 
-                      onSubmit={handleEmailSubmit}
-                      isDark={isDark}
-                    />
-                  )}
-                  {step === 'password' && (
-                    <PasswordStep 
-                      email={email}
-                      onLogin={handlePasswordLogin}
-                      onBack={handleBack}
+                      onSubmit={handleIdentifierSubmit}
                       isDark={isDark}
                     />
                   )}
                   {step === 'otp' && (
                     <OTPStep 
-                      email={email}
+                      identifier={identifier}
+                      isEmail={isEmail}
                       onVerify={handleOTPVerify}
                       onBack={handleBack}
                       isDark={isDark}
@@ -329,7 +341,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                   )}
                   {step === 'profile' && (
                     <ProfileStep 
-                      email={email}
+                      email={identifier}
                       onCreate={handleProfileCreate}
                       onBack={handleBack}
                       isDark={isDark}
@@ -337,7 +349,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                   )}
                 </motion.div>
 
-                {/* Footer - SLOW entrance and exit */}
+                {/* Footer */}
                 <motion.div 
                   className={`px-6 py-3 border-t ${
                     isDark ? 'border-dark-700' : 'border-gray-100'
@@ -356,8 +368,7 @@ const AuthModal = ({ isOpen, onClose, triggerRef }) => {
                     isDark ? 'text-gray-500' : 'text-gray-400'
                   }`}>
                     {step === 'email' && '🔒 Secure access to your account'}
-                    {step === 'password' && '🔒 Your data is encrypted and secure'}
-                    {step === 'otp' && '📧 Check your spam folder if you don\'t see the email'}
+                    {step === 'otp' && `📧 Check your ${isEmail ? 'email' : 'SMS'} for the OTP`}
                     {step === 'profile' && '✨ Help us personalize your experience'}
                   </p>
                 </motion.div>

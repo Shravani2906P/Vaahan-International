@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import ThemeToggle from './ThemeToggle'
 import AuthModal from './AuthModal'
 import { useTheme } from '../context/ThemeContext'
+import { api } from '../services/api' // ADDED
 
 // Static category data
 const DESKTOP_CATEGORIES = [
@@ -65,14 +66,54 @@ const CommonHeader = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const location = useLocation()
   const { isDark } = useTheme()
-  
+
+  // ADDED: User authentication state
+  const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
   // Refs for the login buttons
   const desktopLoginRef = useRef(null)
   const mobileLoginRef = useRef(null)
   const [activeTriggerRef, setActiveTriggerRef] = useState(null)
 
+  // ADDED: Dropdown ref for click outside
+  const dropdownRef = useRef(null)
+
   // Memoized values
   const brandColor = useMemo(() => isDark ? '#0f172a' : '#CFB32B', [isDark])
+
+  // ADDED: Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          const result = await api.getCurrentUser(token)
+          if (result.success) {
+            setUser(result.user)
+          } else {
+            localStorage.removeItem('token')
+          }
+        } catch (error) {
+          localStorage.removeItem('token')
+        }
+      }
+      setIsLoading(false)
+    }
+    checkAuth()
+  }, [])
+
+  // ADDED: Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Scroll handler
   const handleScroll = useCallback(() => {
@@ -89,6 +130,7 @@ const CommonHeader = () => {
     setIsOpen(false)
     setIsCategoriesOpen(false)
     setActiveMobileCategory(null)
+    setIsDropdownOpen(false)
   }, [location.pathname])
 
   // Toggle functions
@@ -125,12 +167,37 @@ const CommonHeader = () => {
     closeMenu()
   }, [closeMenu])
 
-  const closeAuthModal = useCallback(() => {
+  // ADDED: Close auth modal and refresh user
+  const closeAuthModal = useCallback(async () => {
     setIsAuthModalOpen(false)
-    // Clear the ref after exit animation completes
     setTimeout(() => {
       setActiveTriggerRef(null)
     }, 500)
+
+    // Refresh user data after modal closes
+    const token = localStorage.getItem('token')
+    if (token) {
+      try {
+        const result = await api.getCurrentUser(token)
+        if (result.success) {
+          setUser(result.user)
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error)
+      }
+    }
+  }, [])
+
+  // ADDED: Handle logout
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token')
+    setUser(null)
+    setIsDropdownOpen(false)
+  }, [])
+
+  // ADDED: Toggle dropdown
+  const toggleDropdown = useCallback(() => {
+    setIsDropdownOpen(prev => !prev)
   }, [])
 
   // Desktop Categories Dropdown
@@ -279,17 +346,44 @@ const CommonHeader = () => {
 
   // Consistent text classes with proper transitions - ALL NAV ITEMS USE THE SAME CLASSES
   const navLinkClasses = `font-semibold text-sm xl:text-[16px] tracking-wide transition-colors duration-300`
-  const navLinkActiveClasses = isDark 
-    ? 'text-yellow-400 border-b-2 border-yellow-400 pb-1' 
+  const navLinkActiveClasses = isDark
+    ? 'text-yellow-400 border-b-2 border-yellow-400 pb-1'
     : 'text-gray-900 border-b-2 border-gray-900 pb-1'
   const navLinkInactiveClasses = isDark ? 'text-white hover:text-yellow-400' : 'text-gray-900 hover:text-gray-700'
-  
+
   const mobileNavLinkClasses = `block py-2 font-medium text-base sm:text-lg transition-colors duration-300`
   const mobileNavLinkActiveClasses = isDark ? 'text-yellow-400' : 'text-gray-900 font-bold'
   const mobileNavLinkInactiveClasses = isDark ? 'text-white hover:text-yellow-400' : 'text-gray-900 hover:text-gray-700'
 
-  // Login button now uses the SAME navLinkClasses for consistency
-  // No separate login button classes needed anymore
+  // ADDED: Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return '?'
+    if (user.firstName && user.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    }
+    if (user.firstName) {
+      return user.firstName[0].toUpperCase()
+    }
+    if (user.email) {
+      return user.email[0].toUpperCase()
+    }
+    return '?'
+  }
+
+  // ADDED: Get user display name
+  const getUserName = () => {
+    if (!user) return 'User'
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`
+    }
+    if (user.firstName) {
+      return user.firstName
+    }
+    if (user.username) {
+      return user.username
+    }
+    return user.email?.split('@')[0] || 'User'
+  }
 
   return (
     <>
@@ -330,14 +424,75 @@ const CommonHeader = () => {
 
               <CategoriesDropdown />
 
-              {/* Login / Register - Desktop - NOW USING SAME navLinkClasses AS OTHER NAV ITEMS */}
-              <button
-                ref={desktopLoginRef}
-                onClick={openAuthModalDesktop}
-                className={`${navLinkClasses} ${navLinkInactiveClasses}`}
-              >
-                Login / Register
-              </button>
+              {/* REPLACED: Login/Register with User Avatar or Login Button */}
+              {!isLoading && (
+                user ? (
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={toggleDropdown}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-300
+                        }`}
+                    >
+                      {/* Avatar - Light mode: black bg with white text, Dark mode: yellow bg with dark text */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${isDark
+                        ? 'bg-yellow-500 text-gray-900'
+                        : 'bg-gray-900 text-white'
+                        }`}>
+                        {getUserInitials()}
+                      </div>
+                      {/* <span className={`${navLinkClasses} ${navLinkInactiveClasses}`}>
+                        {getUserName()}
+                      </span> */}
+                      <svg className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''} ${isDark ? 'text-gray-400' : 'text-gray-600'
+                        }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && (
+                      <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border py-2 ${isDark
+                        ? 'bg-dark-800 border-dark-700'
+                        : 'bg-white border-gray-200'
+                        }`}>
+                        <Link
+                          to="/profile"
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-200 ${isDark
+                            ? 'text-gray-300 hover:bg-dark-700'
+                            : 'text-gray-700 hover:bg-gray-100'
+                            }`}
+                          onClick={() => setIsDropdownOpen(false)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          My Profile
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm w-full text-left transition-colors duration-200 ${isDark
+                            ? 'text-red-400 hover:bg-dark-700'
+                            : 'text-red-600 hover:bg-gray-100'
+                            }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    ref={desktopLoginRef}
+                    onClick={openAuthModalDesktop}
+                    className={`${navLinkClasses} ${navLinkInactiveClasses}`}
+                  >
+                    Login / Register
+                  </button>
+                )
+              )}
 
               <Link
                 to="/contact"
@@ -408,14 +563,58 @@ const CommonHeader = () => {
                     </NavLink>
                   ))}
 
-                  {/* Login / Register - Mobile - NOW USING SAME mobileNavLinkClasses AS OTHER NAV ITEMS */}
-                  <button
-                    ref={mobileLoginRef}
-                    onClick={openAuthModalMobile}
-                    className={`${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
-                  >
-                    Login / Register
-                  </button>
+                  {/* REPLACED: Mobile Login/Register with User Info or Login Button */}
+                  {!isLoading && (
+                    user ? (
+                      <>
+                        <div className={`px-3 py-2 ${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isDark
+                                ? 'bg-yellow-500 text-gray-900'
+                                : 'bg-gray-900 text-white'
+                              }`}>
+                              {getUserInitials()}
+                            </div>
+                            {/* <span>{getUserName()}</span> */}
+                          </div>
+                        </div>
+                        <Link
+                          to="/profile"
+                          className={`${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
+                          onClick={closeMenu}
+                        >
+                          <div className="flex items-center gap-3">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            My Profile
+                          </div>
+                        </Link>
+                        <button
+                          onClick={() => {
+                            handleLogout()
+                            closeMenu()
+                          }}
+                          className={`${mobileNavLinkClasses} ${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Logout
+                          </div>
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        ref={mobileLoginRef}
+                        onClick={openAuthModalMobile}
+                        className={`${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
+                      >
+                        Login / Register
+                      </button>
+                    )
+                  )}
 
                   {/* Categories Mobile */}
                   <div className="py-1">

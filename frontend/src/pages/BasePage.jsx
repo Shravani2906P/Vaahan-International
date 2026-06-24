@@ -11,7 +11,6 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 ================================================================================
 */
 
-import React from 'react'
 import BaseComponent from '../core/BaseComponent'
 
 class BasePage extends BaseComponent {

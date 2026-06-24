@@ -4,7 +4,7 @@
 File Name : ProfileStep.jsx
 Author : Tahseen Raza
 Created Date : 2026-06-20
-Description : Profile creation step for new users
+Description : Profile creation step for new users - Backend Integrated
 Company : Vaahan International
 Copyright : (c) 2026 Vaahan International. All rights reserved.
 ================================================================================
@@ -26,7 +26,8 @@ const ProfileStep = ({ email, onCreate, onBack, isDark }) => {
     setError('')
   }
 
-  const handleSubmit = (e) => {
+  // UPDATED: Real profile creation with backend
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!formData.firstName || !formData.lastName || !formData.username) {
@@ -42,10 +43,13 @@ const ProfileStep = ({ email, onCreate, onBack, isDark }) => {
     setLoading(true)
     setError('')
 
-    setTimeout(() => {
-      setLoading(false)
-      onCreate()
-    }, 1500)
+    const result = await onCreate(formData)
+    
+    if (result && !result.success) {
+      setError(result.message || 'Failed to create profile')
+    }
+    
+    setLoading(false)
   }
 
   return (
@@ -142,6 +146,7 @@ const ProfileStep = ({ email, onCreate, onBack, isDark }) => {
       <button
         type="button"
         onClick={onBack}
+        disabled={loading}
         className={`text-sm w-full text-center ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
       >
         ← Back

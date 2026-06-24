@@ -3,21 +3,23 @@
 ================================================================================
 File Name : OTPStep.jsx
 Author : Tahseen Raza
-Created Date : 2026-06-20
-Description : OTP verification step for new users
+Created Date : 2026-06-22
+Description : OTP verification step for Email or Phone
 Company : Vaahan International
 Copyright : (c) 2026 Vaahan International. All rights reserved.
 ================================================================================
 */
 
 import { useState, useEffect, useRef } from 'react'
+import { api } from '../../services/api'
 
-const OTPStep = ({ email, onVerify, onBack, isDark }) => {
+const OTPStep = ({ identifier, isEmail, onVerify, onBack, isDark }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [timer, setTimer] = useState(60)
   const [canResend, setCanResend] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
   const inputRefs = useRef([])
 
   useEffect(() => {
@@ -41,6 +43,7 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
     const newOtp = [...otp]
     newOtp[index] = value
     setOtp(newOtp)
+    setError('')
 
     if (value && index < 5) {
       inputRefs.current[index + 1].focus()
@@ -62,11 +65,12 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
     if (/^\d{6}$/.test(pastedData)) {
       const newOtp = pastedData.split('')
       setOtp(newOtp)
+      setError('')
       inputRefs.current[5].focus()
     }
   }
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const otpCode = otp.join('')
     if (otpCode.length < 6) {
       setError('Please enter complete 6-digit OTP')
@@ -76,22 +80,40 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
     setLoading(true)
     setError('')
 
-    setTimeout(() => {
-      setLoading(false)
-      onVerify()
-    }, 1500)
+    const result = await onVerify(otpCode)
+    
+    if (result && !result.success) {
+      setError(result.message || 'Invalid OTP. Please try again.')
+      setOtp(['', '', '', '', '', ''])
+      inputRefs.current[0].focus()
+    }
+    
+    setLoading(false)
   }
 
-  const handleResend = () => {
-    setLoading(true)
+  const handleResend = async () => {
+    setResendLoading(true)
+    setError('')
     setTimer(60)
     setCanResend(false)
     setOtp(['', '', '', '', '', ''])
     inputRefs.current[0].focus()
-    setError('')
-    
+
+    try {
+      const purpose = 'verify'
+      const result = await api.sendOTP(identifier, purpose)
+      if (!result.success) {
+        setError(result.message || 'Failed to resend OTP')
+      } else if (result.otp) {
+        console.log('🔑 New OTP:', result.otp)
+      }
+    } catch (error) {
+      console.error('Resend error:', error)
+      setError('Network error. Please try again.')
+    }
+
     setTimeout(() => {
-      setLoading(false)
+      setResendLoading(false)
       const interval = setInterval(() => {
         setTimer((prev) => {
           if (prev <= 1) {
@@ -105,6 +127,10 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
     }, 1000)
   }
 
+  const displayIdentifier = identifier?.length > 20 
+    ? identifier.slice(0, 20) + '...' 
+    : identifier
+
   return (
     <div className="space-y-4">
       <div>
@@ -112,7 +138,10 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
           Enter the 6-digit code sent to
         </p>
         <p className={`text-sm font-medium text-center mb-6 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-          {email}
+          {displayIdentifier}
+        </p>
+        <p className={`text-xs text-center mb-6 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+          via {isEmail ? '📧 Email' : '📱 SMS'}
         </p>
 
         {error && (
@@ -132,24 +161,26 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
               onPaste={index === 0 ? handlePaste : undefined}
-              className={`w-11 h-14 text-center text-xl font-bold rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200 ${
-                isDark 
-                  ? 'bg-dark-700 border-dark-600 text-white' 
-                  : 'bg-gray-50 border-gray-200 text-gray-900'
+              className={`w-11 h-14 text-center text-xl font-bold rounded-xl border-2 outline-none transition-all duration-300 ${
+                error
+                  ? 'border-red-500 ring-2 ring-red-500/20'
+                  : isDark 
+                    ? 'bg-dark-700 border-dark-600 text-white focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30' 
+                    : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/30'
               }`}
               autoFocus={index === 0}
-              disabled={loading}
+              disabled={loading || resendLoading}
             />
           ))}
         </div>
 
         <button
           onClick={handleVerify}
-          disabled={loading}
+          disabled={loading || resendLoading}
           className={`w-full py-3 rounded-xl font-semibold text-base transition-all duration-300 ${
-            loading
+            loading || resendLoading
               ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
-              : 'bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+              : 'bg-yellow-500 hover:bg-yellow-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0'
           }`}
         >
           {loading ? 'Verifying...' : 'Verify OTP'}
@@ -159,6 +190,7 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
           <button
             type="button"
             onClick={onBack}
+            disabled={loading || resendLoading}
             className={`text-sm ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'} transition-colors`}
           >
             ← Back
@@ -168,10 +200,10 @@ const OTPStep = ({ email, onVerify, onBack, isDark }) => {
             {canResend ? (
               <button
                 onClick={handleResend}
-                disabled={loading}
+                disabled={loading || resendLoading}
                 className="ml-2 text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 font-semibold transition-colors"
               >
-                Resend
+                {resendLoading ? 'Sending...' : 'Resend'}
               </button>
             ) : (
               <span className="ml-2 text-yellow-600 dark:text-yellow-400">
