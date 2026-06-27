@@ -1,15 +1,3 @@
-// src/components/SearchBar.jsx
-/*
-================================================================================
-File Name : SearchBar.jsx
-Author : Tahseen Raza
-Created Date : 2025-01-15
-Description : Professional search bar component for articles
-Company : Vaahan International
-Copyright : (c) 2025 Vaahan International. All rights reserved.
-================================================================================
-*/
-
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { searchArticles } from '../data/articlesData'
@@ -19,6 +7,7 @@ const SearchBar = () => {
   const [results, setResults] = useState([])
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
   const searchRef = useRef(null)
   const navigate = useNavigate()
 
@@ -32,6 +21,7 @@ const SearchBar = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Normal search logic
   useEffect(() => {
     if (query.length >= 2) {
       setIsLoading(true)
@@ -57,13 +47,22 @@ const SearchBar = () => {
     }
   }
 
+  const handleAiModeToggle = () => {
+    if (query.trim()) {
+      navigate(`/ai-mode?q=${encodeURIComponent(query)}`)
+      setQuery('')
+    } else {
+      navigate('/ai-mode')
+    }
+  }
+
   const handleResultClick = () => {
     setIsOpen(false)
     setQuery('')
   }
 
   const getCategoryColor = (category) => {
-    switch(category) {
+    switch (category) {
       case 'Feature Reviews': return 'bg-blue-100 text-blue-700'
       case 'Tech Insights': return 'bg-green-100 text-green-700'
       case 'New Launches': return 'bg-purple-100 text-purple-700'
@@ -80,34 +79,32 @@ const SearchBar = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search automotive articles (ABS, ADAS, AWD, Spiti, Tyres)..."
-            className="w-full px-5 py-4 pl-12 pr-16 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-800 placeholder-gray-400"
+            className="w-full px-5 py-4 pl-12 pr-36 rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-gray-800 placeholder-gray-400 transition-all"
           />
+
           <svg
             className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          {isLoading && (
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-500"></div>
-            </div>
-          )}
-          {query.length >= 2 && !isLoading && (
+
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+            {isLoading && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500" />
+            )}
             <button
               type="button"
-              onClick={() => setQuery('')}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              onClick={handleAiModeToggle}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all bg-gray-100 text-gray-600 hover:bg-yellow-100 hover:text-yellow-700"
             >
-              ✕
+              <span>✨</span>
+              <span>AI Mode</span>
             </button>
-          )}
+          </div>
         </div>
       </form>
 
-      {/* Search Results Dropdown */}
       {isOpen && results.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
           <div className="py-2">
@@ -159,7 +156,6 @@ const SearchBar = () => {
         </div>
       )}
 
-      {/* No Results */}
       {isOpen && query.length >= 2 && results.length === 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 p-8 text-center">
           <div className="text-4xl mb-3">🔍</div>
@@ -167,9 +163,16 @@ const SearchBar = () => {
           <p className="text-sm text-gray-500 mb-3">
             We couldn't find any articles matching "{query}"
           </p>
-          <p className="text-xs text-gray-400">
-            Try searching for: AWD, ADAS, Spiti, Tyres, ABS, ESC
-          </p>
+          <button
+            onClick={() => {
+              navigate(`/ai-mode?q=${encodeURIComponent(query)}`)
+              setIsOpen(false)
+              setQuery('')
+            }}
+            className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors"
+          >
+            ✨ Try AI Mode instead
+          </button>
         </div>
       )}
     </div>
