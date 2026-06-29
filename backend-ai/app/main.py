@@ -10,7 +10,7 @@ from typing import Optional, List
 from rag.retriever import retrieve, cosine_similarity
 from rag.embedder import embed_query
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from llm.prompt_builder import build_prompt, build_rewrite_prompt, check_small_talk, build_small_talk_prompt
@@ -72,73 +72,8 @@ def health():
     return {"status": "ok", "service": "vaahan-ai"}
 
 
-def run_audit_evaluation(query: str, search_query: str, chunks: list, result: dict):
-    """
-    Evaluate the quality of the generated RAG response asynchronously.
-    """
-    try:
-        def compress_score(score):
-            if score >= 4.5:
-                return 4
-            elif score <= 1.5:
-                return 2
-            else:
-                return round(score)
-
-        retrieved_texts = "\n".join([f"- {c['title']}: {c['chunk_text']}" for c in chunks])
-        eval_prompt = f"""You are an objective auditor. Evaluate the RAG response on a 0-5 scale.
-        
-        Retrieved Context:
-        {retrieved_texts}
-        
-        User Query: {query}
-        
-        Response to audit:
-        {result.get('verdict')}
-        
-        Assess four metrics:
-        1. retrieval: Relevance of retrieved chunks (0 if completely irrelevant, 5 if highly relevant).
-        2. accuracy: Factual support from chunks (0 if fabricated, 5 if fully supported).
-        3. completeness: Answered all parts of the user request (0 if completely missed, 5 if fully answered).
-        4. hallucination: Groundedness in the chunks (0 if highly hallucinated, 5 if 100% grounded).
-        
-        Respond STRICTLY in JSON:
-        {{
-          "retrieval": {{"score": float, "rationale": "reasoning"}},
-          "accuracy": {{"score": float, "rationale": "reasoning"}},
-          "completeness": {{"score": float, "rationale": "reasoning"}},
-          "hallucination": {{"score": float, "rationale": "reasoning"}}
-        }}"""
-        
-        eval_response = generate(eval_prompt, max_tokens=1000)
-        eval_clean = eval_response.replace("```json", "").replace("```", "").strip()
-        eval_data = json.loads(eval_clean)
-        
-        total_score = 0
-        score_lines = []
-        for metric in ["retrieval", "accuracy", "completeness", "hallucination"]:
-            m_data = eval_data.get(metric, {"score": 3, "rationale": "N/A"})
-            comp = compress_score(float(m_data.get("score", 3)))
-            total_score += comp
-            score_lines.append(f"  {metric.capitalize()}: {comp}/5 - {m_data.get('rationale', '')[:100]}")
-            
-        ratings = {18: "Excellent", 15: "Good", 12: "Acceptable, but needs improvement"}
-        rating = "Retrieval or answer quality needs work"
-        for thresh, label in sorted(ratings.items(), reverse=True):
-            if total_score >= thresh:
-                rating = label
-                break
-                
-        print("ONLINE QUERY EVALUATION\n")
-        print(f"Query: {query}\n")
-        print("\n".join(score_lines))
-        print(f"\nTOTAL SCORE: {total_score}/20 ({rating})\n")
-    except Exception as e:
-        print(f"[WARNING] Evaluation audit failed: {e}")
-
-
 @app.post("/api/ai-mode", response_model=AIResponse)
-async def ai_mode(request: QueryRequest, background_tasks: BackgroundTasks):
+async def ai_mode(request: QueryRequest):
     query = request.query.strip()
 
     if not query:
@@ -273,9 +208,7 @@ async def ai_mode(request: QueryRequest, background_tasks: BackgroundTasks):
         except Exception as e:
             print(f"[WARNING] Failed to save query response to cache: {e}")
 
-    # Step 5: Background Evaluation (queued asynchronously)
-    if not result.get("is_small_talk"):
-        background_tasks.add_task(run_audit_evaluation, query, search_query, chunks, result)
+
 
     return AIResponse(
         reasoning=result.get("reasoning", ""),
