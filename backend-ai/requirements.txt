@@ -8,3 +8,4 @@ google-genai
 groq
 python-dotenv
 pypdf
+beautifulsoup4
