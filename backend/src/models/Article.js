@@ -98,3 +98,4 @@ ArticleSchema.index({ category: 1 });
 ArticleSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Article', ArticleSchema);
+
