@@ -75,24 +75,24 @@ const Contact = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative pt-32 pb-16 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+      <section className="relative pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
         <div className="container-custom text-center">
-          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-white text-4xl md:text-5xl font-bold mb-4">
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-white text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4">
             Get In Touch
           </motion.h1>
-          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto px-2">
             Have questions about automotive technology or suggestions for future guides? We'd love to hear from you.
           </motion.p>
         </div>
       </section>
 
       {/* Contact Form Section */}
-      <section className={`py-20 transition-colors duration-300 ${isDark ? 'bg-dark-900' : 'bg-white'}`}>
+      <section className={`py-12 sm:py-16 md:py-20 transition-colors duration-300 ${isDark ? 'bg-dark-900' : 'bg-white'}`}>
         <div className="container-custom">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12">
             {/* Form Column */}
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              <h3 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Send us a message</h3>
+              <h3 className={`text-xl sm:text-2xl font-bold mb-4 sm:mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Send us a message</h3>
               
               {error && (
                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -238,21 +238,21 @@ const Contact = () => {
 
             {/* Contact Information Column */}
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
-              <h3 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact Information</h3>
+              <h3 className={`text-xl sm:text-2xl font-bold mb-4 sm:mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>Contact Information</h3>
               <div className="space-y-4">
                 {contactInfo.map((info, idx) => (
-                  <div key={idx} className={`flex items-start space-x-4 p-4 rounded-xl transition-colors duration-300 ${
+                  <div key={idx} className={`flex items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl transition-colors duration-300 ${
                     isDark ? 'bg-dark-800' : 'bg-gray-50'
                   } border ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
-                    <div className={`text-2xl ${isDark ? '' : 'text-gray-600'}`}>{info.icon}</div>
-                    <div>
-                      <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>{info.title}</h4>
+                    <div className={`text-xl sm:text-2xl shrink-0 ${isDark ? '' : 'text-gray-600'}`}>{info.icon}</div>
+                    <div className="min-w-0">
+                      <h4 className={`font-semibold text-sm sm:text-base ${isDark ? 'text-white' : 'text-gray-800'}`}>{info.title}</h4>
                       {info.link ? (
-                        <a href={info.link} className={`transition-colors ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-600 hover:text-yellow-500'}`}>
+                        <a href={info.link} className={`text-sm sm:text-base break-words transition-colors ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-600 hover:text-yellow-500'}`}>
                           {info.value}
                         </a>
                       ) : (
-                        <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>{info.value}</p>
+                        <p className={`text-sm sm:text-base break-words ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{info.value}</p>
                       )}
                     </div>
                   </div>
@@ -260,14 +260,14 @@ const Contact = () => {
               </div>
 
               {/* Response Time */}
-              <div className={`mt-6 p-4 rounded-xl transition-colors duration-300 border ${
+              <div className={`mt-6 p-3 sm:p-4 rounded-xl transition-colors duration-300 border ${
                 isDark ? 'bg-yellow-900/20 border-yellow-800/30' : 'bg-yellow-50 border-yellow-200'
               }`}>
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">⏰</span>
-                  <div>
-                    <h4 className={`font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>Response Time</h4>
-                    <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Within 24–48 hours</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl sm:text-2xl shrink-0">⏰</span>
+                  <div className="min-w-0">
+                    <h4 className={`font-semibold text-sm sm:text-base ${isDark ? 'text-white' : 'text-gray-800'}`}>Response Time</h4>
+                    <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Within 24–48 hours</p>
                   </div>
                 </div>
               </div>
@@ -276,7 +276,7 @@ const Contact = () => {
               <div className={`mt-6 rounded-xl overflow-hidden transition-colors duration-300 border ${
                 isDark ? 'border-dark-700' : 'border-gray-200'
               }`}>
-                <div className="relative w-full h-64">
+                <div className="relative w-full h-56 sm:h-64">
                   <iframe
                     src={mapSrc}
                     width="100%"
@@ -289,14 +289,14 @@ const Contact = () => {
                     className="w-full h-full"
                   ></iframe>
                   {/* Overlay with location name */}
-                  <div className={`absolute bottom-4 left-4 right-4 px-4 py-2 rounded-lg backdrop-blur-sm ${
+                  <div className={`absolute bottom-2 sm:bottom-4 left-2 sm:left-4 right-2 sm:right-4 px-3 sm:px-4 py-2 rounded-lg backdrop-blur-sm ${
                     isDark ? 'bg-black/70 text-white' : 'bg-white/90 text-gray-900'
                   }`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">📍</span>
-                      <div>
-                        <p className="font-semibold text-sm">DryvSquad</p>
-                        <p className="text-xs opacity-75">Bangalore, Karnataka, India</p>
+                      <span className="text-base sm:text-lg shrink-0">📍</span>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-xs sm:text-sm truncate">DryvSquad</p>
+                        <p className="text-[10px] sm:text-xs opacity-75 truncate">Bangalore, Karnataka, India</p>
                       </div>
                     </div>
                   </div>

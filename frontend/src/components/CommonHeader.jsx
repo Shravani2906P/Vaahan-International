@@ -96,8 +96,39 @@ const CommonHeader = () => {
   // Dropdown ref for click outside
   const dropdownRef = useRef(null)
 
+  // Ref to the <nav> element itself — used to publish its real, live rendered
+  // height as a CSS variable so other components (e.g. the Home hero) can
+  // reserve exactly enough space to clear it, instead of guessing pixel values
+  // that drift out of sync whenever the header's own sizing changes.
+  const navRef = useRef(null)
+
   // Memoized values
   const brandColor = useMemo(() => isDark ? '#0f172a' : '#ffffff', [isDark])
+
+  // Publish the nav's real, live rendered height as a CSS variable on <html>.
+  // This is what lets the Home hero (or anything else) reserve exactly the
+  // right amount of space to clear the fixed header — no guessed pixel
+  // values, no drift when the logo size / padding / scroll state changes,
+  // correct on first paint and on every resize, on mobile and desktop alike.
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+
+    const publishHeight = () => {
+      document.documentElement.style.setProperty('--header-height', `${el.offsetHeight}px`)
+    }
+
+    publishHeight()
+
+    const resizeObserver = new ResizeObserver(publishHeight)
+    resizeObserver.observe(el)
+    window.addEventListener('resize', publishHeight)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', publishHeight)
+    }
+  }, [isScrolled])
 
   // Listen for sticky header visibility events
   useEffect(() => {
@@ -425,6 +456,7 @@ const CommonHeader = () => {
   return (
     <>
       <nav
+        ref={navRef}
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           hideHeader ? 'opacity-0 -translate-y-full pointer-events-none' : 'opacity-100 translate-y-0'
         }`}
@@ -582,7 +614,7 @@ const CommonHeader = () => {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden lg:hidden"
               >
-                <div className="pt-3 pb-4 space-y-1.5">
+                <div className="pt-3 pb-4 space-y-1.5 max-h-[calc(100vh-5rem)] overflow-y-auto overscroll-contain pr-1">
                   {NAV_LINKS.map((link) => (
                     <NavLink
                       key={link.path}

@@ -96,14 +96,14 @@ const Articles = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-32 pb-16 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-700">
+      <section className="relative overflow-hidden pt-24 sm:pt-28 md:pt-32 pb-10 sm:pb-12 md:pb-16 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-700">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="container-custom relative z-10 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white mb-4 sm:mb-5"
+            className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-white mb-3 sm:mb-4 md:mb-5"
           >
             Automotive Knowledge Hub
           </motion.h1>
@@ -111,7 +111,7 @@ const Articles = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-base sm:text-lg md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed px-4"
+            className="text-sm sm:text-lg md:text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed px-4"
           >
             Honest reviews, upcoming launches, and technology explained simply.
           </motion.p>
@@ -119,16 +119,16 @@ const Articles = () => {
       </section>
 
       {/* Category Filter Buttons */}
-      <section className={`sticky top-16 z-20 border-b transition-colors duration-300 ${
+      <section className={`sticky top-14 sm:top-16 z-20 border-b transition-colors duration-300 ${
         isDark ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-200'
       }`}>
         <div className="container-custom">
-          <div className="flex flex-wrap gap-2 py-3 sm:py-4 overflow-x-auto">
+          <div className="flex flex-nowrap gap-2 py-2.5 sm:py-3 md:py-4 overflow-x-auto hide-scrollbar">
             {allCategories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => handleCategoryChange(category.name)}
-                className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full whitespace-nowrap font-semibold transition-all duration-300 text-sm sm:text-base ${
+                className={`shrink-0 px-3.5 sm:px-4 md:px-5 py-1.5 sm:py-2 rounded-full whitespace-nowrap font-semibold transition-all duration-300 text-xs sm:text-sm md:text-base ${
                   selectedCategory === category.name
                     ? 'bg-yellow-500 text-gray-900 shadow-md'
                     : isDark 

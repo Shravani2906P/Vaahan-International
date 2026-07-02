@@ -49,13 +49,13 @@ const sendSMSOTP = async (phoneNumber, otp, purpose = 'verify') => {
     // Customize message based on purpose
     let message = '';
     if (purpose === 'login') {
-      message = `🔐 Vaahan International\nYour login OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.\n\n- Vaahan International`;
+      message = `🔐 Dryvsquad\nYour login OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.\n\n- Dryvsquad`;
     } else if (purpose === 'verify_phone') {
-      message = `🔐 Vaahan International\nYour mobile verification OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.\n\n- Vaahan International`;
+      message = `🔐 Dryvsquad\nYour mobile verification OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.\n\n- Dryvsquad`;
     } else if (purpose === 'verify') {
-      message = `🔐 Vaahan International\nYour verification OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.\n\n- Vaahan International`;
+      message = `🔐 Dryvsquad\nYour verification OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.\n\n- Dryvsquad`;
     } else {
-      message = `🔐 Vaahan International\nYour OTP is: ${otp}\nValid for 10 minutes.\n\n- Vaahan International`;
+      message = `🔐 Dryvsquad\nYour OTP is: ${otp}\nValid for 10 minutes.\n\n- Dryvsquad`;
     }
 
     // Prepare request data for Brevo SMS API
@@ -145,7 +145,7 @@ const sendSMSViaTwilio = async (phoneNumber, otp, purpose = 'verify') => {
       formattedNumber = `+${formattedNumber}`;
     }
 
-    const message = `🔐 Vaahan International\nYour OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.`;
+    const message = `🔐 Dryvsquad\nYour OTP is: ${otp}\nValid for 10 minutes. Do not share this OTP with anyone.`;
 
     const result = await client.messages.create({
       body: message,

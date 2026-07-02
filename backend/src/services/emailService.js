@@ -128,7 +128,7 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
       return { success: false, error: 'Email service not configured properly' };
     }
 
-    const subject = 'Your OTP for Vaahan International';
+    const subject = 'Your OTP for Dryvsquad';
     const html = `
       <!DOCTYPE html>
       <html>
@@ -164,14 +164,14 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🚗 Vaahan International</h1>
+            <h1>🚗 Dryvsquad</h1>
             <p>Your trusted automotive partner</p>
           </div>
           <div class="content">
             <p class="greeting">Hello,</p>
             <p class="message">
               You requested to ${purpose === 'login' ? 'sign in to' : 'verify your account on'} 
-              <strong>Vaahan International</strong>.
+              <strong>Dryvsquad</strong>.
             </p>
             <p class="message">Please use the following OTP to complete your ${purpose === 'login' ? 'login' : 'verification'}:</p>
             
@@ -207,7 +207,7 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
               <span class="badge">${purpose === 'login' ? '🔐 Login' : '✅ Verify'}</span>
             </p>
             <p style="margin-top: 8px;">
-              &copy; ${new Date().getFullYear()} Vaahan International. All rights reserved.
+              &copy; ${new Date().getFullYear()} Dryvsquad. All rights reserved.
             </p>
             <p style="font-size: 12px; margin-top: 4px;">
               This is an automated email, please do not reply.
