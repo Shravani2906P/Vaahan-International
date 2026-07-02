@@ -147,7 +147,7 @@ const AdminPage = () => {
   // --- RENDERING ADMIN LOGIN SCREEN ---
   if (!token) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center pt-28 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl">
           <div>
             <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-2xl bg-yellow-500/10 text-yellow-500">
@@ -203,7 +203,7 @@ const AdminPage = () => {
 
   // --- RENDERING ARTICLE CREATION FORM ---
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 text-slate-100 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700/50 pb-6 mb-10">
@@ -216,7 +216,7 @@ const AdminPage = () => {
                 DryvSquad AI Creator
               </h1>
               <p className="text-xs text-slate-400 mt-0.5">
-                Publishing to database cluster & Pinecone vectors
+                Publishing to database 
               </p>
             </div>
           </div>
@@ -416,7 +416,6 @@ const AdminPage = () => {
               className="w-full flex items-center justify-between px-6 py-4 bg-slate-900/40 text-left font-semibold text-white focus:outline-none hover:bg-slate-900/60 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span>🔍</span>
                 <span>SEO Metadata Configuration</span>
               </div>
               <span className={`transition-transform duration-200 ${showSeo ? 'rotate-180' : ''}`}>▼</span>
@@ -495,7 +494,6 @@ const AdminPage = () => {
                 </>
               ) : (
                 <>
-                  <span>🚀</span>
                   <span>Publish Article</span>
                 </>
               )}
