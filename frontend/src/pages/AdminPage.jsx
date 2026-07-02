@@ -97,18 +97,15 @@ const AdminPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-900 text-slate-100 py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-3 bg-yellow-500/10 text-yellow-500 rounded-2xl mb-4">
-            <span className="text-3xl">✨</span>
-          </div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            DryvSquad AI Admin
+            DryvSquad Admin
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            Publish articles to the database. They will be auto-synced to the RAG AI chatbot in real-time.
+            Publish articles to the database.
           </p>
         </div>
 
@@ -224,11 +221,13 @@ const AdminPage = () => {
                 />
                 {formData.image && (
                   <div className="mt-3 rounded-xl border border-slate-700/50 p-2 bg-slate-900/40 inline-block">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">Preview</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1 font-semibold">
+                      Preview
+                    </p>
                     <img 
                       src={formData.image} 
                       alt="Preview" 
-                      className="max-h-28 rounded-lg object-cover border border-slate-700"
+                      className="max-h-28 rounded-lg object-cover border-none"
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   </div>
@@ -299,7 +298,6 @@ const AdminPage = () => {
               className="w-full flex items-center justify-between px-6 py-4 bg-slate-900/40 text-left font-semibold text-white focus:outline-none hover:bg-slate-900/60 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span>🔍</span>
                 <span>SEO Metadata Configuration</span>
               </div>
               <span className={`transition-transform duration-200 ${showSeo ? 'rotate-180' : ''}`}>▼</span>
@@ -378,7 +376,6 @@ const AdminPage = () => {
                 </>
               ) : (
                 <>
-                  <span>🚀</span>
                   <span>Publish Article</span>
                 </>
               )}
