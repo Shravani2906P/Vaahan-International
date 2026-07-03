@@ -345,7 +345,7 @@ const Profile = () => {
                     </div>
 
                     {/* Overall Status */}
-                    <div className="flex items-center justify-between pt-2 border-t border-dashed ${isDark ? 'border-dark-700' : 'border-gray-200'}">
+                    <div className={`flex items-center justify-between pt-2 border-t border-dashed ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
                       <span className="text-sm font-medium">Overall Status</span>
                       <div>
                         {isFullyVerified ? (

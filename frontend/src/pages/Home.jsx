@@ -25,18 +25,21 @@ const BANNERS = [
   {
     id: 1,
     image: "/Hero1.png",
+    mobileImage: "/Hero1-mobile.png",
     link: "/articles",
     buttonText: "Explore Articles →"
   },
   {
     id: 2,
     image: "/Hero2.png",
+    mobileImage: "/Hero2-mobile.png",
     link: "/travelogues",
     buttonText: "Read Travel Stories →"
   },
   {
     id: 3,
     image: "/Hero3.png",
+    mobileImage: "/Hero3-mobile2.png",
     link: "/compare-cars",
     buttonText: "Compare Cars →"
   }
@@ -138,8 +141,8 @@ const Home = () => {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: 'easeOut' } }
   }
 
- // ========================================
-// Hero Section with Banner Slider - FIXED: Full width, no cropping
+// ========================================
+// Hero Section with Banner Slider - FINAL FIX: No empty space, Top text visible
 // ========================================
 const renderHero = () => {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -156,11 +159,10 @@ const renderHero = () => {
   }
 
   return (
-    // FIX: Container is locked to the exact aspect ratio of the source PNGs (1672x941 ≈ 16:9).
-    // Because the box ratio and image ratio are identical, object-cover never has to crop
-    // anything and there is never leftover empty space — the artwork always fills the box 1:1.
-    <section className="relative w-full aspect-[1672/941] overflow-hidden bg-black">
-      <div className="absolute inset-0 w-full h-full z-0">
+    <section className="relative w-full overflow-hidden bg-transparent">
+      {/* Removed aspect ratios. On mobile, it fills full width naturally */}
+      <div className="w-full relative aspect-[4/5] md:aspect-[1672/941]">
+        
         {BANNERS.map((banner, index) => (
           <div
             key={banner.id}
@@ -168,31 +170,36 @@ const renderHero = () => {
               index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
           >
-            {/* Full banner artwork — title, subtitle & icon strip are already part of the
-                design, so the image is shown as-is with nothing cropped and nothing
-                duplicated on top of it. */}
-            <img
-              src={banner.image}
-              alt={banner.title}
-              className="w-full h-full object-cover object-center block"
-            />
+            <picture>
+              {/* Swap images based on device width */}
+              <source media="(max-width: 767px)" srcSet={banner.mobileImage} />
+              <img
+                src={banner.image}
+                alt={banner.title}
+                /* 
+                   FIX:
+                   - desktop: object-contain (shows whole image perfectly)
+                   - mobile: mobile-hero-fix (zooms in and adjusts downward to show the text)
+                */
+                className="w-full h-full object-contain md:object-contain mobile-hero-fix block"
+              />
+            </picture>
 
-            {/* Small legibility gradient — confined to the bottom-left corner only,
-                so it never dims the artwork/text elsewhere in the image. */}
+            {/* Small legibility gradient - Kept bottom-left only */}
             <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-black/55 via-black/10 to-transparent pointer-events-none"></div>
 
-            {/* CTA button — pinned to bottom-left corner with yellow background and black text */}
+            {/* CTA button */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 12 }}
               transition={{ duration: 0.5, delay: 0.25 }}
-              className="absolute bottom-3 left-3 sm:bottom-5 sm:left-5 md:bottom-8 md:left-8 z-10"
+              className="absolute bottom-2 left-2 xs:bottom-3 xs:left-3 sm:bottom-5 sm:left-5 md:bottom-8 md:left-8 z-10"
             >
               <Link
                 to={banner.link}
-                className="inline-block whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 rounded-xl font-semibold text-xs sm:text-sm md:text-base transition-all duration-300 hover:scale-105 hover:shadow-xl text-black"
+                className="inline-block whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 rounded-lg sm:rounded-xl font-semibold text-[11px] xs:text-xs sm:text-sm md:text-base transition-all duration-300 hover:scale-105 hover:shadow-xl text-black"
                 style={{
-                  background: '#EAB308', // Yellow background
+                  background: '#EAB308',
                   border: '1px solid rgba(255, 255, 255, 0.3)',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
                 }}
@@ -202,37 +209,38 @@ const renderHero = () => {
             </motion.div>
           </div>
         ))}
+
+        {/* Navigation Arrows (Left & Right) */}
+        <button
+          onClick={() => goToSlide((currentSlide - 1 + BANNERS.length) % BANNERS.length)}
+          className="absolute left-1.5 xs:left-2 sm:left-4 md:left-6 top-1/2 transform -translate-y-1/2 z-20 w-6 h-6 xs:w-7 xs:h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/30 transition-colors duration-150 flex items-center justify-center text-white border border-white/20"
+          aria-label="Previous slide"
+        >
+          <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          onClick={() => goToSlide((currentSlide + 1) % BANNERS.length)}
+          className="absolute right-1.5 xs:right-2 sm:right-4 md:right-6 top-1/2 transform -translate-y-1/2 z-20 w-6 h-6 xs:w-7 xs:h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/30 transition-colors duration-150 flex items-center justify-center text-white border border-white/20"
+          aria-label="Next slide"
+        >
+          <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
-      {/* Navigation Arrows — kept small and inset so they sit over empty margin, not artwork */}
-      <button
-        onClick={() => goToSlide((currentSlide - 1 + BANNERS.length) % BANNERS.length)}
-        className="absolute left-2 sm:left-4 md:left-6 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/30 transition-colors duration-150 flex items-center justify-center text-white border border-white/20"
-        aria-label="Previous slide"
-      >
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      <button
-        onClick={() => goToSlide((currentSlide + 1) % BANNERS.length)}
-        className="absolute right-2 sm:right-4 md:right-6 top-1/2 transform -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/30 transition-colors duration-150 flex items-center justify-center text-white border border-white/20"
-        aria-label="Next slide"
-      >
-        <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* Dots Indicator — kept top-center so it never lands on the bottom banner artwork */}
-      <div className="absolute top-2 sm:top-3 md:top-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+          <div className="hidden md:flex justify-center items-center gap-2 md:absolute md:bottom-5 md:left-0 md:right-0 md:mt-0 z-20">
         {BANNERS.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`h-2 sm:h-2.5 rounded-full transition-all duration-300 ${
-              index === currentSlide ? 'bg-yellow-500 w-6 sm:w-8' : 'bg-white/50 hover:bg-white/80 w-2 sm:w-2.5'
+            className={`rounded-full transition-all duration-300 ${
+              index === currentSlide 
+                ? 'bg-yellow-500 w-5 h-2' 
+                : 'bg-white/60 w-1.5 h-2'
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
@@ -241,7 +249,6 @@ const renderHero = () => {
     </section>
   )
 }
-
   // ========================================
   // Search Section
   // ========================================

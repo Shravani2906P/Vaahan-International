@@ -152,12 +152,36 @@ a:hover,
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Prevent any fixed-width child from forcing horizontal scroll on phones */
+    overflow-x: hidden;
+    width: 100%;
   }
 
   body {
     @apply font-sans antialiased;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  #root {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Never let media overflow their container on any screen size */
+  img, video, svg, canvas, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Respect notches / home-indicator on modern phones */
+  @supports (padding: max(0px)) {
+    body {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -198,7 +222,7 @@ a:hover,
    ======================================== */
 @layer components {
   .container-custom {
-    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl;
+    @apply container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl w-full;
   }
 
   .btn-primary {
@@ -303,6 +327,20 @@ a:hover,
   }
   .grid-responsive-4 {
     @apply grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6;
+  }
+
+  /* Wrap any table in this so wide data scrolls horizontally on phones
+     instead of squeezing/breaking the layout */
+  .table-responsive {
+    @apply w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Comfortable minimum tap target on touch devices */
+  @media (max-width: 640px) {
+    button, a.btn-primary, a.btn-secondary {
+      min-height: 40px;
+    }
   }
 }
 
