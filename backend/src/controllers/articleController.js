@@ -292,3 +292,117 @@ exports.createArticle = async (req, res) => {
     });
   }
 };
+
+// ========================================
+// PUT /api/articles/:id - Update an existing article
+// ========================================
+exports.updateArticle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      category,
+      subCategory,
+      excerpt,
+      content,
+      image,
+      author,
+      date,
+      readTime,
+      tags,
+      status,
+      seoTitle,
+      seoDescription,
+      seoKeywords
+    } = req.body;
+
+    const article = await Article.findById(id);
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found',
+      });
+    }
+
+    // Generate slug from title if modified
+    let slug = article.slug;
+    if (title && title !== article.title) {
+      slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+
+    // Process keywords and tags arrays
+    const processedTags = Array.isArray(tags)
+      ? tags
+      : (tags ? tags.split(',').map(t => t.trim()) : article.tags);
+      
+    const processedKeywords = Array.isArray(seoKeywords)
+      ? seoKeywords
+      : (seoKeywords ? seoKeywords.split(',').map(k => k.trim()) : article.seoKeywords);
+
+    const updatedFields = {
+      title,
+      slug,
+      category,
+      subCategory: subCategory !== undefined ? subCategory : article.subCategory,
+      excerpt,
+      content,
+      image,
+      author,
+      date,
+      readTime,
+      tags: processedTags,
+      status: status || article.status,
+      seoTitle: seoTitle || title || article.seoTitle,
+      seoDescription: seoDescription || excerpt || article.seoDescription,
+      seoKeywords: processedKeywords,
+      updatedAt: new Date()
+    };
+
+    const updatedArticle = await Article.findByIdAndUpdate(id, updatedFields, { new: true });
+
+    res.status(200).json({
+      success: true,
+      message: 'Article updated successfully!',
+      article: updatedArticle,
+    });
+  } catch (error) {
+    console.error('❌ Update article error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update article',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// ========================================
+// DELETE /api/articles/:id - Delete an article
+// ========================================
+exports.deleteArticle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const article = await Article.findByIdAndDelete(id);
+    
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Article deleted successfully!',
+    });
+  } catch (error) {
+    console.error('❌ Delete article error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete article',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};

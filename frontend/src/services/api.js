@@ -491,6 +491,54 @@ export const api = {
     }
   },
 
+  // Update an existing article
+  updateArticle: async (id, articleData, token = null) => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/articles/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(articleData),
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Update article error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.',
+      };
+    }
+  },
+
+  // Delete an article
+  deleteArticle: async (id, token = null) => {
+    try {
+      const headers = {
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/articles/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Delete article error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.',
+      };
+    }
+  },
+
   // Get article by slug
   getArticleBySlug: async (slug) => {
     try {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../services/api'
 
@@ -10,6 +10,14 @@ const AdminPage = () => {
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  // Navigation Tabs State
+  const [activeTab, setActiveTab] = useState('write') // 'write' or 'manage'
+  const [articlesList, setArticlesList] = useState([])
+  const [isLoadingList, setIsLoadingList] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Loading & Message State for publishing
   const [isLoading, setIsLoading] = useState(false)
@@ -74,6 +82,111 @@ const AdminPage = () => {
     localStorage.removeItem('admin_token')
     setToken(null)
     setMessage({ type: '', text: '' })
+    setIsEditing(false)
+    setEditingId(null)
+  }
+
+  // Fetch articles for management tab
+  const fetchArticlesForManagement = async () => {
+    setIsLoadingList(true)
+    try {
+      const response = await api.getAllArticles()
+      if (response.success) {
+        setArticlesList(response.articles)
+      } else {
+        console.error('Failed to load articles list')
+      }
+    } catch (err) {
+      console.error('Error fetching articles list:', err)
+    } finally {
+      setIsLoadingList(false)
+    }
+  }
+
+  useEffect(() => {
+    if (token && activeTab === 'manage') {
+      fetchArticlesForManagement()
+    }
+  }, [token, activeTab])
+
+  // Load article into form for editing
+  const handleEditClick = (article) => {
+    setIsEditing(true)
+    setEditingId(article._id)
+    setFormData({
+      title: article.title || '',
+      category: article.category || 'Tech Insights',
+      subCategory: article.subCategory || '',
+      excerpt: article.excerpt || '',
+      content: article.content || '',
+      image: article.image || '',
+      author: article.author || 'DryvSquad AI Editorial',
+      date: article.date || '',
+      readTime: article.readTime || '5 min read',
+      tags: Array.isArray(article.tags) ? article.tags.join(', ') : (article.tags || ''),
+      seoTitle: article.seoTitle || '',
+      seoDescription: article.seoDescription || '',
+      seoKeywords: Array.isArray(article.seoKeywords) ? article.seoKeywords.join(', ') : (article.seoKeywords || ''),
+    })
+    setActiveTab('write')
+    setMessage({ type: '', text: '' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Cancel edit mode
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditingId(null)
+    setFormData({
+      title: '',
+      category: 'Tech Insights',
+      subCategory: '',
+      excerpt: '',
+      content: '',
+      image: '',
+      author: 'DryvSquad AI Editorial',
+      date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
+      readTime: '5 min read',
+      tags: '',
+      seoTitle: '',
+      seoDescription: '',
+      seoKeywords: '',
+    })
+    setMessage({ type: '', text: '' })
+  }
+
+  // Delete article
+  const handleDeleteClick = async (id, title) => {
+    if (!window.confirm(`Are you sure you want to delete the article: "${title}"?`)) {
+      return
+    }
+    
+    try {
+      const response = await api.deleteArticle(id, token)
+      if (response.success) {
+        setMessage({
+          type: 'success',
+          text: `Article "${title}" deleted successfully!`
+        })
+        fetchArticlesForManagement()
+      } else {
+        if (response.status === 401 || response.status === 403) {
+          handleLogout()
+          setLoginError('Session expired. Please log in again.')
+        } else {
+          setMessage({
+            type: 'error',
+            text: response.message || 'Failed to delete article.'
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Delete error:', err)
+      setMessage({
+        type: 'error',
+        text: 'An error occurred while deleting the article.'
+      })
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -96,40 +209,32 @@ const AdminPage = () => {
     }
 
     try {
-      const response = await api.createArticle(formData, token)
+      let response
+      if (isEditing) {
+        response = await api.updateArticle(editingId, formData, token)
+      } else {
+        response = await api.createArticle(formData, token)
+      }
+
       if (response.success) {
         setMessage({
           type: 'success',
-          text: `🎉 Article created successfully! URL Slug: "${response.article.slug}"`
+          text: isEditing 
+            ? `Article updated successfully! URL Slug: "${response.article.slug}"`
+            : `Article created successfully! URL Slug: "${response.article.slug}"`
         })
         
-        // Reset form
-        setFormData({
-          title: '',
-          category: 'Tech Insights',
-          subCategory: '',
-          excerpt: '',
-          content: '',
-          image: '',
-          author: 'DryvSquad AI Editorial',
-          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
-          readTime: '5 min read',
-          tags: '',
-          seoTitle: '',
-          seoDescription: '',
-          seoKeywords: '',
-        })
-        
+        // Reset form and editing status
+        handleCancelEdit()
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
-        // If forbidden or unauthorized, log them out
         if (response.status === 401 || response.status === 403) {
           handleLogout()
           setLoginError('Session expired. Please log in again.')
         } else {
           setMessage({
             type: 'error',
-            text: response.message || 'Failed to create article.'
+            text: response.message || (isEditing ? 'Failed to update article.' : 'Failed to create article.')
           })
         }
       }
@@ -178,7 +283,6 @@ const AdminPage = () => {
         <div className="max-w-md w-full space-y-8 bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl">
           <div>
             <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-2xl bg-yellow-500/10 text-yellow-500">
-              <span className="text-2xl">🔒</span>
             </div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
               Admin Login
@@ -190,7 +294,6 @@ const AdminPage = () => {
 
           {loginError && (
             <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-2">
-              <span>⚠️</span>
               <div>{loginError}</div>
             </div>
           )}
@@ -233,11 +336,9 @@ const AdminPage = () => {
     <div className="min-h-screen bg-slate-900 text-slate-100 pt-28 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1600px] mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700/50 pb-6 mb-8">
+        <div className="flex items-center justify-between border-b border-slate-700/50 pb-6 mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-yellow-500/10 text-yellow-500 rounded-2xl text-xl">
-              ✨
-            </div>
+            
             <div>
               <h1 className="text-2xl font-extrabold text-white">
                 DryvSquad AI Creator
@@ -256,6 +357,30 @@ const AdminPage = () => {
           </button>
         </div>
 
+        {/* Navigation Tabs */}
+        <div className="flex gap-4 border-b border-slate-750/50 pb-4 mb-6">
+          <button
+            onClick={() => setActiveTab('write')}
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'write'
+                ? 'bg-yellow-500 text-slate-950 font-bold'
+                : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {isEditing ? 'Edit Article' : 'Write Article'}
+          </button>
+          <button
+            onClick={() => setActiveTab('manage')}
+            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'manage'
+                ? 'bg-yellow-500 text-slate-950 font-bold'
+                : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Manage Articles
+          </button>
+        </div>
+
         {/* Status Alerts */}
         {message.text && (
           <div className={`p-4 rounded-xl mb-6 text-sm flex items-start gap-3 border ${
@@ -268,8 +393,76 @@ const AdminPage = () => {
           </div>
         )}
 
-        {/* Grid Container for Side-by-Side Editor & Preview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Conditionally Render Tabs */}
+        {activeTab === 'manage' ? (
+          <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-6 md:p-8 shadow-2xl">
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-white">Published Articles ({articlesList.length})</h3>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title, author, or category..."
+                className="w-full sm:max-w-md bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+              />
+            </div>
+            
+            {isLoadingList ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500"></div>
+              </div>
+            ) : articlesList.filter(art => 
+                art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                art.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                art.author.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 ? (
+              <p className="text-slate-400 text-center py-8">No articles found matching search criteria.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-slate-400 font-semibold uppercase text-xs tracking-wider">
+                      <th className="py-3 px-4">Title</th>
+                      <th className="py-3 px-4">Category</th>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Author</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800 text-slate-300">
+                    {articlesList.filter(art => 
+                      art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      art.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      art.author.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).map(art => (
+                      <tr key={art._id} className="hover:bg-slate-850/50 transition-colors">
+                        <td className="py-4 px-4 font-semibold text-white max-w-sm truncate">{art.title}</td>
+                        <td className="py-4 px-4">{art.category}</td>
+                        <td className="py-4 px-4">{art.date}</td>
+                        <td className="py-4 px-4">{art.author}</td>
+                        <td className="py-4 px-4 text-right space-x-2 whitespace-nowrap">
+                          <button
+                            onClick={() => handleEditClick(art)}
+                            className="px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-slate-950 rounded-lg text-xs font-semibold transition-all"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(art._id, art.title)}
+                            className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-450 hover:text-white rounded-lg text-xs font-semibold transition-all"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           
           {/* --- LEFT COLUMN: EDITOR FORM --- */}
           <form onSubmit={handleSubmit} className="space-y-8 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700/50 p-6 md:p-8 shadow-2xl">
@@ -505,10 +698,10 @@ const AdminPage = () => {
             <div className="pt-4 flex items-center justify-between gap-4">
               <button
                 type="button"
-                onClick={() => navigate('/articles')}
+                onClick={isEditing ? handleCancelEdit : () => navigate('/articles')}
                 className="px-6 py-3.5 border border-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors"
               >
-                Cancel
+                {isEditing ? 'Cancel Edit' : 'Cancel'}
               </button>
               <button
                 type="submit"
@@ -520,11 +713,11 @@ const AdminPage = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
-                    <span>Publishing Article...</span>
+                    <span>{isEditing ? 'Updating Article...' : 'Publishing Article...'}</span>
                   </>
                 ) : (
                   <>
-                    <span>Publish Article</span>
+                    <span>{isEditing ? 'Update Article' : 'Publish Article'}</span>
                   </>
                 )}
               </button>
@@ -619,6 +812,8 @@ const AdminPage = () => {
           </div>
 
         </div>
+        )}
+
       </div>
     </div>
   )

@@ -20,6 +20,8 @@ const {
   getFeaturedArticles,
   getRecentArticles,
   createArticle,
+  updateArticle,
+  deleteArticle,
 } = require('../controllers/articleController');
 
 const { protect, admin } = require('../middleware/auth');
@@ -33,6 +35,12 @@ router.get('/', getAllArticles);
 
 // Create a new article (protected with Admin role validation)
 router.post('/', protect, admin, createArticle);
+
+// Update an existing article (protected with Admin role validation)
+router.put('/:id', protect, admin, updateArticle);
+
+// Delete an article (protected with Admin role validation)
+router.delete('/:id', protect, admin, deleteArticle);
 
 // Get featured articles (limit 3)
 router.get('/featured', getFeaturedArticles);
