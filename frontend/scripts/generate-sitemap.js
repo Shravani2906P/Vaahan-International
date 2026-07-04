@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SITE_URL = 'https://vaahaninternational.com'; // Adjust to your actual domain
+const SITE_URL = 'https://www.dryvsquad.com'; // Adjust to your actual domain
 // Using production API as primary source. During local build, fallback to localhost if production is down.
 const PRODUCTION_API = 'https://vaahan-international.onrender.com/api';
 const LOCAL_API = 'http://localhost:5000/api';
