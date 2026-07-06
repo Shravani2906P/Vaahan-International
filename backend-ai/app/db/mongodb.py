@@ -9,6 +9,7 @@ client = MongoClient(os.getenv("MONGODB_URI"))
 db = client[os.getenv("MONGODB_DB_NAME")]
 
 articles_collection = db["articles"]
+travelogues_collection = db["travelogues"]
 chunks_collection = db["ai_chunks"]
 cache_collection = db["ai_cache"]
 

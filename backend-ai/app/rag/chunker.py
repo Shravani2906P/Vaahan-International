@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import re
 
-from app.db.mongodb import articles_collection
+from app.db.mongodb import articles_collection, travelogues_collection
 
 
 def recursive_split_text(text: str, chunk_size: int = 900, chunk_overlap: int = 150) -> list[str]:
@@ -143,10 +143,63 @@ def chunk_article(article):
 
 def chunk_articles():
     chunks = []
-
     for article in articles_collection.find():
         chunks.extend(chunk_article(article))
+    return chunks
 
+
+def chunk_travelogue(travelogue):
+    base_chunk = {
+        "source_type": "travelogue",
+        "source_id": str(travelogue["_id"]),
+        "title": travelogue["title"],
+        "slug": travelogue.get("slug", ""),
+        "category": travelogue.get("category", ""),
+        "tags": travelogue.get("tags", []),
+        "excerpt": travelogue.get("excerpt", "")
+    }
+
+    content_text = travelogue.get("content", "")
+
+    if not content_text:
+        return [{
+            **base_chunk,
+            "chunk_id": f"travelogue_{travelogue['_id']}_chunk_0",
+            "chunk_text": f"[Travelogue: {travelogue['title']} | Category: {travelogue.get('category', 'Travel Stories')}] {travelogue.get('excerpt', '')}",
+            "chunk_index": 0
+        }]
+
+    # Fallback/clean for plain text/extracted text
+    full_text = re.sub(r'\s*\n\s*\n\s*', '\n\n', content_text).strip()
+    full_text = re.sub(r' +', ' ', full_text)
+
+    # Split the full text recursively using 900 max characters chunk size, with 150 characters overlap
+    raw_chunks = recursive_split_text(full_text, chunk_size=900, chunk_overlap=150)
+    
+    chunks = []
+    for index, text in enumerate(raw_chunks):
+        text = text.strip()
+        if len(text) < 30:
+            continue
+            
+        # Context Injection: prepend main title and category directly to the chunk text
+        context_prefix = f"[Travelogue: {travelogue['title']} | Category: {travelogue.get('category', 'Travel Stories')}] "
+        final_chunk_text = context_prefix + text
+        
+        chunks.append({
+            **base_chunk,
+            "chunk_id": f"travelogue_{travelogue['_id']}_chunk_{index}",
+            "chunk_text": final_chunk_text,
+            "chunk_index": index
+        })
+
+    return chunks
+
+
+def chunk_travelogues():
+    chunks = []
+    for travelogue in travelogues_collection.find():
+        chunks.extend(chunk_travelogue(travelogue))
     return chunks
 
 

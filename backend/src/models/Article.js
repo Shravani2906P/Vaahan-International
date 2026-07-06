@@ -16,7 +16,6 @@ const ArticleSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Feature Reviews', 'New Launches', 'Tech Insights'],
   },
   subCategory: {
     type: String,

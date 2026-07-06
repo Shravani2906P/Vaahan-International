@@ -28,7 +28,6 @@ const TravelogueSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['First Time Buyers', 'Highway Driving', 'Travel Stories', 'Buying Guide'],
   },
   excerpt: {
     type: String,

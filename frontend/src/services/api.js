@@ -690,6 +690,101 @@ export const api = {
 
   
   // ========================================
+  // TRAVELOGUES API
+  // ========================================
+
+  // Get all travelogues
+  getAllTravelogues: async () => {
+    try {
+      const response = await fetch(`${API_URL}/travelogues`, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Get travelogues error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.',
+      };
+    }
+  },
+
+  // Create a new travelogue
+  createTravelogue: async (travelogueData, token = null) => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/travelogues`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(travelogueData),
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Create travelogue error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.',
+      };
+    }
+  },
+
+  // Update an existing travelogue
+  updateTravelogue: async (id, travelogueData, token = null) => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/travelogues/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(travelogueData),
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Update travelogue error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.',
+      };
+    }
+  },
+
+  // Delete a travelogue
+  deleteTravelogue: async (id, token = null) => {
+    try {
+      const headers = {
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/travelogues/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Delete travelogue error:', error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection.',
+      };
+    }
+  },
+
+  // ========================================
   // Send Contact Form
   // ========================================
   sendContactForm: async (formData) => {

@@ -18,6 +18,8 @@ const AdminPage = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [contentType, setContentType] = useState('article') // 'article' or 'travelogue'
+  const [manageType, setManageType] = useState('article') // 'article' or 'travelogue'
 
   // Loading & Message State for publishing
   const [isLoading, setIsLoading] = useState(false)
@@ -31,6 +33,7 @@ const AdminPage = () => {
     excerpt: '',
     content: '',
     image: '',
+    thumbnail: '', // Added for travelogue support
     author: 'DryvSquad AI Editorial',
     date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
     readTime: '5 min read',
@@ -103,30 +106,62 @@ const AdminPage = () => {
     }
   }
 
+  // Fetch travelogues for management tab
+  const fetchTraveloguesForManagement = async () => {
+    setIsLoadingList(true)
+    try {
+      const response = await api.getAllTravelogues()
+      if (response.success) {
+        setArticlesList(response.travelogues)
+      } else {
+        console.error('Failed to load travelogues list')
+      }
+    } catch (err) {
+      console.error('Error fetching travelogues list:', err)
+    } finally {
+      setIsLoadingList(false)
+    }
+  }
+
   useEffect(() => {
     if (token && activeTab === 'manage') {
-      fetchArticlesForManagement()
+      if (manageType === 'article') {
+        fetchArticlesForManagement()
+      } else {
+        fetchTraveloguesForManagement()
+      }
     }
-  }, [token, activeTab])
+  }, [token, activeTab, manageType])
 
-  // Load article into form for editing
-  const handleEditClick = (article) => {
+  // Change content type write mode
+  const handleContentTypeChange = (type) => {
+    setContentType(type)
+    setFormData(prev => ({
+      ...prev,
+      category: type === 'article' ? 'Tech Insights' : 'Travel Stories'
+    }))
+  }
+
+  // Load item into form for editing
+  const handleEditClick = (item, type = 'article') => {
     setIsEditing(true)
-    setEditingId(article._id)
+    setEditingId(item._id)
+    setContentType(type)
     setFormData({
-      title: article.title || '',
-      category: article.category || 'Tech Insights',
-      subCategory: article.subCategory || '',
-      excerpt: article.excerpt || '',
-      content: article.content || '',
-      image: article.image || '',
-      author: article.author || 'DryvSquad AI Editorial',
-      date: article.date || '',
-      readTime: article.readTime || '5 min read',
-      tags: Array.isArray(article.tags) ? article.tags.join(', ') : (article.tags || ''),
-      seoTitle: article.seoTitle || '',
-      seoDescription: article.seoDescription || '',
-      seoKeywords: Array.isArray(article.seoKeywords) ? article.seoKeywords.join(', ') : (article.seoKeywords || ''),
+      title: item.title || '',
+      category: item.category || (type === 'article' ? 'Tech Insights' : 'Travel Stories'),
+      subCategory: item.subCategory || '',
+      excerpt: item.excerpt || '',
+      content: item.content || '',
+      image: item.image || '',
+      thumbnail: item.thumbnail || '',
+      author: item.author || 'DryvSquad AI Editorial',
+      date: item.date || '',
+      readTime: item.readTime || '5 min read',
+      tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || ''),
+      seoTitle: item.seoTitle || '',
+      seoDescription: item.seoDescription || '',
+      seoKeywords: Array.isArray(item.seoKeywords) ? item.seoKeywords.join(', ') : (item.seoKeywords || ''),
     })
     setActiveTab('write')
     setMessage({ type: '', text: '' })
@@ -139,11 +174,12 @@ const AdminPage = () => {
     setEditingId(null)
     setFormData({
       title: '',
-      category: 'Tech Insights',
+      category: contentType === 'article' ? 'Tech Insights' : 'Travel Stories',
       subCategory: '',
       excerpt: '',
       content: '',
       image: '',
+      thumbnail: '',
       author: 'DryvSquad AI Editorial',
       date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
       readTime: '5 min read',
@@ -155,20 +191,26 @@ const AdminPage = () => {
     setMessage({ type: '', text: '' })
   }
 
-  // Delete article
-  const handleDeleteClick = async (id, title) => {
-    if (!window.confirm(`Are you sure you want to delete the article: "${title}"?`)) {
+  // Delete article or travelogue
+  const handleDeleteClick = async (id, title, type = 'article') => {
+    if (!window.confirm(`Are you sure you want to delete this ${type}: "${title}"?`)) {
       return
     }
     
     try {
-      const response = await api.deleteArticle(id, token)
+      const response = type === 'article'
+        ? await api.deleteArticle(id, token)
+        : await api.deleteTravelogue(id, token)
       if (response.success) {
         setMessage({
           type: 'success',
-          text: `Article "${title}" deleted successfully!`
+          text: `🗑️ ${type === 'article' ? 'Article' : 'Travelogue'} "${title}" deleted successfully!`
         })
-        fetchArticlesForManagement()
+        if (type === 'article') {
+          fetchArticlesForManagement()
+        } else {
+          fetchTraveloguesForManagement()
+        }
       } else {
         if (response.status === 401 || response.status === 403) {
           handleLogout()
@@ -176,7 +218,7 @@ const AdminPage = () => {
         } else {
           setMessage({
             type: 'error',
-            text: response.message || 'Failed to delete article.'
+            text: response.message || `Failed to delete ${type}.`
           })
         }
       }
@@ -184,7 +226,7 @@ const AdminPage = () => {
       console.error('Delete error:', err)
       setMessage({
         type: 'error',
-        text: 'An error occurred while deleting the article.'
+        text: `An error occurred while deleting the ${type}.`
       })
     }
   }
@@ -211,17 +253,23 @@ const AdminPage = () => {
     try {
       let response
       if (isEditing) {
-        response = await api.updateArticle(editingId, formData, token)
+        response = contentType === 'article'
+          ? await api.updateArticle(editingId, formData, token)
+          : await api.updateTravelogue(editingId, formData, token)
       } else {
-        response = await api.createArticle(formData, token)
+        response = contentType === 'article'
+          ? await api.createArticle(formData, token)
+          : await api.createTravelogue(formData, token)
       }
 
       if (response.success) {
+        const itemType = contentType === 'article' ? 'Article' : 'Travelogue'
+        const responseData = response.article || response.travelogue
         setMessage({
           type: 'success',
           text: isEditing 
-            ? `Article updated successfully! URL Slug: "${response.article.slug}"`
-            : `Article created successfully! URL Slug: "${response.article.slug}"`
+            ? `🎉 ${itemType} updated successfully! URL Slug: "${responseData.slug}"`
+            : `🎉 ${itemType} created successfully! URL Slug: "${responseData.slug}"`
         })
         
         // Reset form and editing status
@@ -234,7 +282,7 @@ const AdminPage = () => {
         } else {
           setMessage({
             type: 'error',
-            text: response.message || (isEditing ? 'Failed to update article.' : 'Failed to create article.')
+            text: response.message || (isEditing ? `Failed to update ${contentType}.` : `Failed to create ${contentType}.`)
           })
         }
       }
@@ -367,7 +415,9 @@ const AdminPage = () => {
                 : 'bg-slate-800 text-slate-400 hover:text-slate-200'
             }`}
           >
-            {isEditing ? 'Edit Article' : 'Write Article'}
+            {isEditing 
+              ? `Edit ${contentType === 'article' ? 'Article' : 'Travelogue'}` 
+              : `Write Content`}
           </button>
           <button
             onClick={() => setActiveTab('manage')}
@@ -377,7 +427,7 @@ const AdminPage = () => {
                 : 'bg-slate-800 text-slate-400 hover:text-slate-200'
             }`}
           >
-            Manage Articles
+            Manage Content
           </button>
         </div>
 
@@ -397,7 +447,32 @@ const AdminPage = () => {
         {activeTab === 'manage' ? (
           <div className="bg-slate-800/50 rounded-2xl border border-slate-700/50 p-6 md:p-8 shadow-2xl">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-white">Published Articles ({articlesList.length})</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Published {manageType === 'article' ? 'Articles' : 'Travelogues'} ({articlesList.length})
+                </h3>
+                
+                {/* Manage Type Toggle */}
+                <div className="flex gap-2 bg-slate-900/40 p-1 rounded-lg border border-slate-700/50 max-w-[200px]">
+                  <button
+                    onClick={() => setManageType('article')}
+                    className={`flex-1 py-1 rounded text-[10px] font-semibold transition-all ${
+                      manageType === 'article' ? 'bg-slate-750 text-yellow-500 font-bold' : 'text-slate-400'
+                    }`}
+                  >
+                    Articles
+                  </button>
+                  <button
+                    onClick={() => setManageType('travelogue')}
+                    className={`flex-1 py-1 rounded text-[10px] font-semibold transition-all ${
+                      manageType === 'travelogue' ? 'bg-slate-750 text-yellow-500 font-bold' : 'text-slate-400'
+                    }`}
+                  >
+                    Travelogues
+                  </button>
+                </div>
+              </div>
+
               <input
                 type="text"
                 value={searchQuery}
@@ -412,11 +487,13 @@ const AdminPage = () => {
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500"></div>
               </div>
             ) : articlesList.filter(art => 
-                art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                art.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                art.author.toLowerCase().includes(searchQuery.toLowerCase())
+                (art.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (art.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (art.author || '').toLowerCase().includes(searchQuery.toLowerCase())
               ).length === 0 ? (
-              <p className="text-slate-400 text-center py-8">No articles found matching search criteria.</p>
+              <p className="text-slate-400 text-center py-8">
+                No {manageType === 'article' ? 'articles' : 'travelogues'} found matching search criteria.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm border-collapse">
@@ -431,9 +508,9 @@ const AdminPage = () => {
                   </thead>
                   <tbody className="divide-y divide-slate-800 text-slate-300">
                     {articlesList.filter(art => 
-                      art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      art.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      art.author.toLowerCase().includes(searchQuery.toLowerCase())
+                      (art.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      (art.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      (art.author || '').toLowerCase().includes(searchQuery.toLowerCase())
                     ).map(art => (
                       <tr key={art._id} className="hover:bg-slate-850/50 transition-colors">
                         <td className="py-4 px-4 font-semibold text-white max-w-sm truncate">{art.title}</td>
@@ -442,13 +519,13 @@ const AdminPage = () => {
                         <td className="py-4 px-4">{art.author}</td>
                         <td className="py-4 px-4 text-right space-x-2 whitespace-nowrap">
                           <button
-                            onClick={() => handleEditClick(art)}
+                            onClick={() => handleEditClick(art, manageType)}
                             className="px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500 text-yellow-500 hover:text-slate-950 rounded-lg text-xs font-semibold transition-all"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteClick(art._id, art.title)}
+                            onClick={() => handleDeleteClick(art._id, art.title, manageType)}
                             className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 text-rose-450 hover:text-white rounded-lg text-xs font-semibold transition-all"
                           >
                             Delete
@@ -467,17 +544,41 @@ const AdminPage = () => {
           {/* --- LEFT COLUMN: EDITOR FORM --- */}
           <form onSubmit={handleSubmit} className="space-y-8 bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-700/50 p-6 md:p-8 shadow-2xl">
             
-            {/* Article Core Information */}
+            {/* Content Type Selector */}
+            {!isEditing && (
+              <div className="flex gap-2 mb-6 bg-slate-900/40 p-1.5 rounded-xl border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => handleContentTypeChange('article')}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    contentType === 'article' ? 'bg-slate-800 text-yellow-500 font-bold' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Article Mode
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleContentTypeChange('travelogue')}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    contentType === 'travelogue' ? 'bg-slate-800 text-yellow-500 font-bold' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Travelogue Mode
+                </button>
+              </div>
+            )}
+
+            {/* Core Information */}
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-white border-b border-slate-700/50 pb-2">
-                Article Details
+                {contentType === 'article' ? 'Article Details' : 'Travelogue Details'}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Title */}
                 <div className="md:col-span-2">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Article Title <span className="text-rose-400">*</span>
+                    {contentType === 'article' ? 'Article Title' : 'Travelogue Title'} <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -494,32 +595,46 @@ const AdminPage = () => {
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                     Category <span className="text-rose-400">*</span>
                   </label>
-                  <select
+                  <input
+                    type="text"
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
-                  >
-                    <option value="Tech Insights">Tech Insights</option>
-                    <option value="Feature Reviews">Feature Reviews</option>
-                    <option value="New Launches">New Launches</option>
-                  </select>
-                </div>
-
-                {/* Sub-Category */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Sub-Category (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="subCategory"
-                    value={formData.subCategory}
-                    onChange={handleInputChange}
-                    placeholder="e.g. Safety Systems"
+                    placeholder={contentType === 'article' ? "e.g. Tech Insights" : "e.g. Travel Stories"}
                     className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                   />
                 </div>
+
+                {/* Sub-Category vs Thumbnail */}
+                {contentType === 'article' ? (
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                      Sub-Category (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="subCategory"
+                      value={formData.subCategory}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Safety Systems"
+                      className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                      Thumbnail Image URL (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="thumbnail"
+                      value={formData.thumbnail || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g. /images/travelogue/thumbnails/bike-vs-car.png"
+                      className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                )}
 
                 {/* Author */}
                 <div>
@@ -595,7 +710,7 @@ const AdminPage = () => {
             {/* Excerpt and Content */}
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-white border-b border-slate-700/50 pb-2">
-                Article Content
+                {contentType === 'article' ? 'Article Content' : 'Travelogue Content'}
               </h3>
 
               <div className="space-y-6">
@@ -617,14 +732,14 @@ const AdminPage = () => {
                 {/* Content */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Article Body (Markdown / Text) <span className="text-rose-400">*</span>
+                    {contentType === 'article' ? 'Article Body (Markdown / Text)' : 'Travelogue Body (Markdown / Text)'} <span className="text-rose-400">*</span>
                   </label>
                   <textarea
                     name="content"
                     value={formData.content}
                     onChange={handleInputChange}
                     rows="14"
-                    placeholder="Write the full article content here. You can use markdown or plain paragraphs."
+                    placeholder="Write the full content here. You can use markdown or plain paragraphs."
                     className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -676,20 +791,22 @@ const AdminPage = () => {
                     />
                   </div>
 
-                  {/* SEO Keywords */}
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                      SEO Keywords (Comma-separated)
-                    </label>
-                    <input
-                      type="text"
-                      name="seoKeywords"
-                      value={formData.seoKeywords}
-                      onChange={handleInputChange}
-                      placeholder="e.g. ABS technology, safety, how brakes work"
-                      className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
-                    />
-                  </div>
+                  {/* SEO Keywords (Articles Only) */}
+                  {contentType === 'article' && (
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                        SEO Keywords (Comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        name="seoKeywords"
+                        value={formData.seoKeywords}
+                        onChange={handleInputChange}
+                        placeholder="e.g. ABS technology, safety, how brakes work"
+                        className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -713,11 +830,11 @@ const AdminPage = () => {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent" />
-                    <span>{isEditing ? 'Updating Article...' : 'Publishing Article...'}</span>
+                    <span>{isEditing ? `Updating ${contentType === 'article' ? 'Article' : 'Travelogue'}...` : `Publishing ${contentType === 'article' ? 'Article' : 'Travelogue'}...`}</span>
                   </>
                 ) : (
                   <>
-                    <span>{isEditing ? 'Update Article' : 'Publish Article'}</span>
+                    <span>{isEditing ? `Update ${contentType === 'article' ? 'Article' : 'Travelogue'}` : `Publish ${contentType === 'article' ? 'Article' : 'Travelogue'}`}</span>
                   </>
                 )}
               </button>

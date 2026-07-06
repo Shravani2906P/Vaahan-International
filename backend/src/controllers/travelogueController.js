@@ -124,3 +124,177 @@ exports.getFeaturedTravelogues = async (req, res) => {
     });
   }
 };
+
+// ========================================
+// POST /api/travelogues - Create a new travelogue
+// ========================================
+exports.createTravelogue = async (req, res) => {
+  try {
+    const {
+      title,
+      category,
+      excerpt,
+      content,
+      image,
+      thumbnail,
+      author,
+      date,
+      readTime,
+      tags,
+      status,
+      seoTitle,
+      seoDescription
+    } = req.body;
+
+    // Generate unique slug from title
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    // Process tags array
+    const processedTags = Array.isArray(tags) 
+      ? tags 
+      : (tags ? tags.split(',').map(t => t.trim()) : []);
+
+    const newTravelogue = new Travelogue({
+      title,
+      slug,
+      category,
+      excerpt,
+      content,
+      image,
+      thumbnail: thumbnail || '',
+      author,
+      date,
+      readTime,
+      tags: processedTags,
+      status: status || 'published',
+      seoTitle: seoTitle || title,
+      seoDescription: seoDescription || excerpt
+    });
+
+    await newTravelogue.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Travelogue created successfully!',
+      travelogue: newTravelogue,
+    });
+  } catch (error) {
+    console.error('❌ Create travelogue error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create travelogue',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// ========================================
+// PUT /api/travelogues/:id - Update an existing travelogue
+// ========================================
+exports.updateTravelogue = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      category,
+      excerpt,
+      content,
+      image,
+      thumbnail,
+      author,
+      date,
+      readTime,
+      tags,
+      status,
+      seoTitle,
+      seoDescription
+    } = req.body;
+
+    const travelogue = await Travelogue.findById(id);
+    if (!travelogue) {
+      return res.status(404).json({
+        success: false,
+        message: 'Travelogue not found',
+      });
+    }
+
+    // Generate slug from title if modified
+    let slug = travelogue.slug;
+    if (title && title !== travelogue.title) {
+      slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
+
+    // Process tags array
+    const processedTags = Array.isArray(tags)
+      ? tags
+      : (tags ? tags.split(',').map(t => t.trim()) : travelogue.tags);
+
+    const updatedFields = {
+      title,
+      slug,
+      category,
+      excerpt,
+      content,
+      image,
+      thumbnail: thumbnail !== undefined ? thumbnail : travelogue.thumbnail,
+      author,
+      date,
+      readTime,
+      tags: processedTags,
+      status: status || travelogue.status,
+      seoTitle: seoTitle || title || travelogue.seoTitle,
+      seoDescription: seoDescription || excerpt || travelogue.seoDescription,
+      updatedAt: new Date()
+    };
+
+    const updatedTravelogue = await Travelogue.findByIdAndUpdate(id, updatedFields, { new: true });
+
+    res.status(200).json({
+      success: true,
+      message: 'Travelogue updated successfully!',
+      travelogue: updatedTravelogue,
+    });
+  } catch (error) {
+    console.error('❌ Update travelogue error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update travelogue',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// ========================================
+// DELETE /api/travelogues/:id - Delete a travelogue
+// ========================================
+exports.deleteTravelogue = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const travelogue = await Travelogue.findByIdAndDelete(id);
+    
+    if (!travelogue) {
+      return res.status(404).json({
+        success: false,
+        message: 'Travelogue not found',
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Travelogue deleted successfully!',
+    });
+  } catch (error) {
+    console.error('❌ Delete travelogue error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete travelogue',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};

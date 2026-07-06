@@ -6,10 +6,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 
 from app.db.mongodb import (
     articles_collection,
+    travelogues_collection,
     chunks_collection
 )
 
-from app.rag.chunker import chunk_article
+from app.rag.chunker import chunk_article, chunk_travelogue
 from app.rag.embedder import embed_texts
 
 
@@ -17,32 +18,28 @@ def ingest():
 
     articles = articles_collection.find({
         "$or": [
-            {
-                "last_embedded_at": {
-                    "$exists": False
-                }
-            },
-            {
-                "$expr": {
-                    "$gt": [
-                        "$updatedAt",
-                        "$last_embedded_at"
-                    ]
-                }
-            }
+            {"last_embedded_at": {"$exists": False}},
+            {"$expr": {"$gt": ["$updatedAt", "$last_embedded_at"]}}
         ]
     })
-
     articles = list(articles)
 
+    travelogues = travelogues_collection.find({
+        "$or": [
+            {"last_embedded_at": {"$exists": False}},
+            {"$expr": {"$gt": ["$updatedAt", "$last_embedded_at"]}}
+        ]
+    })
+    travelogues = list(travelogues)
+
     print(
-        f"Found {len(articles)} articles"
+        f"Found {len(articles)} articles and {len(travelogues)} travelogues to ingest."
     )
 
-    article_ids = [str(a["_id"]) for a in articles]
-    if article_ids:
-        print(f"Clearing old chunks for {len(article_ids)} articles...")
-        chunks_collection.delete_many({"source_id": {"$in": article_ids}})
+    item_ids = [str(a["_id"]) for a in articles] + [str(t["_id"]) for t in travelogues]
+    if item_ids:
+        print(f"Clearing old chunks for {len(item_ids)} items...")
+        chunks_collection.delete_many({"source_id": {"$in": item_ids}})
         pinecone_api_key = os.getenv("PINECONE_API_KEY")
         pinecone_index_name = os.getenv("PINECONE_INDEX_NAME")
         if not pinecone_api_key or not pinecone_index_name:
@@ -51,21 +48,22 @@ def ingest():
         from pinecone import Pinecone
         pc = Pinecone(api_key=pinecone_api_key)
         index = pc.Index(pinecone_index_name)
-        for art_id in article_ids:
+        for item_id in item_ids:
             try:
-                index.delete(filter={"source_id": art_id})
+                index.delete(filter={"source_id": item_id})
             except Exception as e:
-                print(f"[WARNING] Pinecone delete for article {art_id} failed: {e}")
+                print(f"[WARNING] Pinecone delete for source {item_id} failed: {e}")
         print("Cleared old chunks from Pinecone.")
 
     all_chunks = []
 
     for article in articles:
-        chunks = chunk_article(article)
-        all_chunks.extend(chunks)
+        all_chunks.extend(chunk_article(article))
+    for travelogue in travelogues:
+        all_chunks.extend(chunk_travelogue(travelogue))
 
     print(
-        f"Created {len(all_chunks)} chunks"
+        f"Created {len(all_chunks)} chunks total."
     )
 
     texts = [
@@ -135,7 +133,12 @@ def ingest():
                 {"_id": article["_id"]},
                 {"$set": {"last_embedded_at": datetime.utcnow()}}
             )
-        print("Updated last_embedded_at timestamp for all processed articles")
+        for travelogue in travelogues:
+            travelogues_collection.update_one(
+                {"_id": travelogue["_id"]},
+                {"$set": {"last_embedded_at": datetime.utcnow()}}
+            )
+        print("Updated last_embedded_at timestamp for all processed articles and travelogues")
     else:
         print("No new chunks to insert.")
 
