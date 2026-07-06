@@ -10,6 +10,7 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 ================================================================================
 */
 
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function to handle response
