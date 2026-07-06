@@ -84,8 +84,8 @@ const ComparisonResults = ({
     const percentage = rating !== null ? (rating / 10) * 100 : 0
 
     return (
-      <div className="flex items-center justify-center gap-3 w-full">
-        <div className="w-44 h-2.5 bg-gray-200 dark:bg-dark-700 rounded-full overflow-hidden theme-transition">
+      <div className="flex items-center justify-center gap-1.5 sm:gap-3 w-full">
+        <div className="w-16 sm:w-28 md:w-44 h-2 sm:h-2.5 bg-gray-200 dark:bg-dark-700 rounded-full overflow-hidden theme-transition">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${percentage}%` }}
@@ -93,8 +93,8 @@ const ComparisonResults = ({
             className={`h-full ${colors.bar} rounded-full`}
           />
         </div>
-        <span className={`text-sm font-bold ${colors.text} min-w-[50px] text-right theme-transition`}>
-          {rating !== null ? `${rating.toFixed(1)} / 10` : 'N/A'}
+        <span className={`text-[11px] sm:text-sm font-bold ${colors.text} min-w-[36px] sm:min-w-[50px] text-right theme-transition`}>
+          {rating !== null ? `${rating.toFixed(1)}/10` : 'N/A'}
         </span>
       </div>
     )
@@ -148,7 +148,7 @@ const ComparisonResults = ({
       {/* ✅ Car Cards with ID for scroll tracking */}
       <div 
         id="comparison-car-cards"
-        className="px-6 md:px-8 py-6 md:py-8 grid grid-cols-1 md:grid-cols-3 gap-6 bg-gradient-to-b from-gray-50 to-white dark:from-dark-800/80 dark:to-dark-800 border-b border-gray-200 dark:border-dark-700 theme-transition"
+        className="px-3 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 bg-gradient-to-b from-gray-50 to-white dark:from-dark-800/80 dark:to-dark-800 border-b border-gray-200 dark:border-dark-700 theme-transition"
       >
         {/* Parameter Label */}
         <div className="hidden md:flex flex-col items-center justify-center text-center">
@@ -158,9 +158,9 @@ const ComparisonResults = ({
         {/* Car 1 */}
         <div 
           ref={carCardRef1}
-          className="text-center flex flex-col items-center justify-end relative"
+          className="col-start-1 md:col-start-2 text-center flex flex-col items-center justify-end md:justify-start relative md:border-r md:border-gray-200 dark:md:border-dark-700 pr-1 sm:pr-0"
         >
-          <div className="flex justify-center mb-4 w-full h-36 md:h-44 lg:h-48 relative">
+          <div className="flex justify-center mb-2 sm:mb-4 w-full h-20 sm:h-36 md:h-44 lg:h-48 relative">
             <img 
               src={car1.image} 
               alt={car1.model} 
@@ -169,25 +169,25 @@ const ComparisonResults = ({
           </div>
           
           {/* ✅ UPDATED ROW: Brand name centered, Edit button aligned right */}
-          <div className="flex items-center justify-center w-full relative mb-1.5 px-2">
-            <span className="text-xs font-bold px-3 py-0.5 bg-yellow-500 text-gray-900 rounded-full shadow-sm">
+          <div className="flex items-center justify-center w-full relative mb-1 sm:mb-1.5 px-1 sm:px-2">
+            <span className="text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 bg-yellow-500 text-gray-900 rounded-full shadow-sm">
               {car1.brand}
             </span>
             <button
               onClick={() => handleEditClick(1)}
-              className="absolute right-2 text-[11px] font-medium text-gray-500 hover:text-yellow-600 dark:text-gray-400 dark:hover:text-yellow-400 transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-dark-700 px-2 py-1 rounded-md"
+              className="absolute right-0 sm:right-2 text-[9px] sm:text-[11px] font-medium text-gray-500 hover:text-yellow-600 dark:text-gray-400 dark:hover:text-yellow-400 transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-dark-700 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md"
             >
               ✏️ Edit
             </button>
           </div>
 
-          <div className="text-lg md:text-xl font-bold text-gray-800 dark:text-white leading-tight theme-transition">{car1.model}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider font-semibold theme-transition">{car1Variant}</div>
-          <div className="text-sm font-bold text-yellow-600 dark:text-yellow-400 mt-2 theme-transition">{car1.price}</div>
+          <div className="text-xs sm:text-lg md:text-xl font-bold text-gray-800 dark:text-white leading-tight theme-transition px-1">{car1.model}</div>
+          <div className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 uppercase tracking-wider font-semibold theme-transition">{car1Variant}</div>
+          <div className="text-[11px] sm:text-sm font-bold text-yellow-600 dark:text-yellow-400 mt-1 sm:mt-2 theme-transition">{car1.price}</div>
           {car1.overallScore && (
-            <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-full border border-yellow-500/20 theme-transition">
-              <span className="text-xs text-yellow-600 dark:text-yellow-400">★</span>
-              <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">{car1.overallScore.toFixed(1)}</span>
+            <div className="mt-1.5 sm:mt-3 inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-full border border-yellow-500/20 theme-transition">
+              <span className="text-[10px] sm:text-xs text-yellow-600 dark:text-yellow-400">★</span>
+              <span className="text-xs sm:text-sm font-bold text-yellow-600 dark:text-yellow-400">{car1.overallScore.toFixed(1)}</span>
             </div>
           )}
         </div>
@@ -195,9 +195,9 @@ const ComparisonResults = ({
         {/* Car 2 */}
         <div 
           ref={carCardRef2}
-          className="text-center flex flex-col items-center justify-end relative"
+          className="col-start-2 md:col-start-3 text-center flex flex-col items-center justify-end md:justify-start relative pl-1 sm:pl-0"
         >
-          <div className="flex justify-center mb-4 w-full h-36 md:h-44 lg:h-48 relative">
+          <div className="flex justify-center mb-2 sm:mb-4 w-full h-20 sm:h-36 md:h-44 lg:h-48 relative">
             <img 
               src={car2.image} 
               alt={car2.model} 
@@ -206,25 +206,25 @@ const ComparisonResults = ({
           </div>
           
           {/* ✅ UPDATED ROW: Brand name centered, Edit button aligned right */}
-          <div className="flex items-center justify-center w-full relative mb-1.5 px-2">
-            <span className="text-xs font-bold px-3 py-0.5 bg-yellow-500 text-gray-900 rounded-full shadow-sm">
+          <div className="flex items-center justify-center w-full relative mb-1 sm:mb-1.5 px-1 sm:px-2">
+            <span className="text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 bg-yellow-500 text-gray-900 rounded-full shadow-sm">
               {car2.brand}
             </span>
             <button
               onClick={() => handleEditClick(2)}
-              className="absolute right-2 text-[11px] font-medium text-gray-500 hover:text-yellow-600 dark:text-gray-400 dark:hover:text-yellow-400 transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-dark-700 px-2 py-1 rounded-md"
+              className="absolute right-0 sm:right-2 text-[9px] sm:text-[11px] font-medium text-gray-500 hover:text-yellow-600 dark:text-gray-400 dark:hover:text-yellow-400 transition-colors duration-200 flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-dark-700 px-1 sm:px-2 py-0.5 sm:py-1 rounded-md"
             >
               ✏️ Edit
             </button>
           </div>
 
-          <div className="text-lg md:text-xl font-bold text-gray-800 dark:text-white leading-tight theme-transition">{car2.model}</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 uppercase tracking-wider font-semibold theme-transition">{car2Variant}</div>
-          <div className="text-sm font-bold text-yellow-600 dark:text-yellow-400 mt-2 theme-transition">{car2.price}</div>
+          <div className="text-xs sm:text-lg md:text-xl font-bold text-gray-800 dark:text-white leading-tight theme-transition px-1">{car2.model}</div>
+          <div className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 uppercase tracking-wider font-semibold theme-transition">{car2Variant}</div>
+          <div className="text-[11px] sm:text-sm font-bold text-yellow-600 dark:text-yellow-400 mt-1 sm:mt-2 theme-transition">{car2.price}</div>
           {car2.overallScore && (
-            <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-full border border-yellow-500/20 theme-transition">
-              <span className="text-xs text-yellow-600 dark:text-yellow-400">★</span>
-              <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">{car2.overallScore.toFixed(1)}</span>
+            <div className="mt-1.5 sm:mt-3 inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-0.5 sm:py-1 bg-yellow-500/10 dark:bg-yellow-500/20 rounded-full border border-yellow-500/20 theme-transition">
+              <span className="text-[10px] sm:text-xs text-yellow-600 dark:text-yellow-400">★</span>
+              <span className="text-xs sm:text-sm font-bold text-yellow-600 dark:text-yellow-400">{car2.overallScore.toFixed(1)}</span>
             </div>
           )}
         </div>
@@ -245,26 +245,26 @@ const ComparisonResults = ({
                   isExpanded ? 'shadow-md border-yellow-400/50 dark:border-yellow-500/30 ring-1 ring-yellow-400/20' : 'hover:border-gray-300 dark:hover:border-dark-600 hover:shadow-sm'
                 }`}
               >
-                <div className="px-6 md:px-8 py-4 md:py-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <div className="px-3 sm:px-6 md:px-8 py-4 md:py-6 grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 items-center">
                   
-                  <div className="flex items-center gap-4 col-span-1">
-                    <div className="flex-shrink-0 flex items-center justify-center w-12 h-12 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 shadow-sm text-2xl theme-transition">
+                  <div className="flex items-center gap-2 sm:gap-4 col-span-2 md:col-span-1">
+                    <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 shadow-sm text-lg sm:text-2xl theme-transition">
                       {icon}
                     </div>
-                    <span className="font-bold text-sm text-gray-800 dark:text-gray-200 uppercase tracking-wide theme-transition">
+                    <span className="font-bold text-xs sm:text-sm text-gray-800 dark:text-gray-200 uppercase tracking-wide theme-transition">
                       {label}
                     </span>
                   </div>
 
                   <div className="flex flex-col items-center justify-center col-span-1">
-                    <span className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2 text-center theme-transition">
+                    <span className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 mb-1.5 sm:mb-2 text-center theme-transition">
                       {data.car1.value}
                     </span>
                     {renderRatingBar(data.car1.rating)}
                   </div>
 
                   <div className="flex flex-col items-center justify-center col-span-1">
-                    <span className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2 text-center theme-transition">
+                    <span className="text-sm sm:text-base font-semibold text-gray-800 dark:text-gray-200 mb-1.5 sm:mb-2 text-center theme-transition">
                       {data.car2.value}
                     </span>
                     {renderRatingBar(data.car2.rating)}
@@ -301,28 +301,28 @@ const ComparisonResults = ({
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
                       className="overflow-hidden"
                     >
-                      <div className="px-6 md:px-8 py-4 md:py-6 bg-yellow-50/30 dark:bg-yellow-900/5 border-t border-yellow-100 dark:border-yellow-900/20 theme-transition">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="px-3 sm:px-6 md:px-8 py-4 md:py-6 bg-yellow-50/30 dark:bg-yellow-900/5 border-t border-yellow-100 dark:border-yellow-900/20 theme-transition">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                           <div className="hidden md:block"></div>
 
                           {data.car1.explanation && (
-                            <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 shadow-sm theme-transition">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-bold text-gray-800 dark:text-gray-200 theme-transition">
+                            <div className="col-start-1 md:col-start-2 p-2.5 sm:p-4 rounded-xl border border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 shadow-sm theme-transition">
+                              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                                <span className="text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 theme-transition truncate">
                                   {car1Full} ({car1Variant})
                                 </span>
                                 {data.car1.rating !== null && data.car1.rating >= 7 && (
-                                  <span className="text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full flex-shrink-0 theme-transition">
+                                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 theme-transition">
                                     ★ Good
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed theme-transition">
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 sm:mb-3 leading-relaxed theme-transition">
                                 {data.car1.explanation.summary}
                               </p>
-                              <ul className="space-y-1.5">
+                              <ul className="space-y-1 sm:space-y-1.5">
                                 {data.car1.explanation.details?.map((detail, idx) => (
-                                  <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 theme-transition">
+                                  <li key={idx} className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 flex items-start gap-1.5 sm:gap-2 theme-transition">
                                     <span className="text-yellow-500 mt-0.5 text-xs">◆</span>
                                     {detail}
                                   </li>
@@ -332,23 +332,23 @@ const ComparisonResults = ({
                           )}
 
                           {data.car2.explanation && (
-                            <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 shadow-sm theme-transition">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-sm font-bold text-gray-800 dark:text-gray-200 theme-transition">
+                            <div className="col-start-2 md:col-start-3 p-2.5 sm:p-4 rounded-xl border border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 shadow-sm theme-transition">
+                              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                                <span className="text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 theme-transition truncate">
                                   {car2Full} ({car2Variant})
                                 </span>
                                 {data.car2.rating !== null && data.car2.rating >= 7 && (
-                                  <span className="text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full flex-shrink-0 theme-transition">
+                                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-1.5 sm:px-2 py-0.5 rounded-full flex-shrink-0 theme-transition">
                                     ★ Good
                                   </span>
                                 )}
                               </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 leading-relaxed theme-transition">
+                              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 sm:mb-3 leading-relaxed theme-transition">
                                 {data.car2.explanation.summary}
                               </p>
-                              <ul className="space-y-1.5">
+                              <ul className="space-y-1 sm:space-y-1.5">
                                 {data.car2.explanation.details?.map((detail, idx) => (
-                                  <li key={idx} className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2 theme-transition">
+                                  <li key={idx} className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 flex items-start gap-1.5 sm:gap-2 theme-transition">
                                     <span className="text-yellow-500 mt-0.5 text-xs">◆</span>
                                     {detail}
                                   </li>

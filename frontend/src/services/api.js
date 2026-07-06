@@ -26,6 +26,39 @@ const handleResponse = async (response) => {
   }
 };
 
+// Cache for the full car hierarchy. It rarely changes within a session, so
+// repeat visits to the compare page reuse it instead of re-fetching.
+// - In-memory (_carsCache): fastest, but wiped on a hard refresh.
+// - sessionStorage: survives a hard refresh / direct URL load, so even the
+//   FIRST time someone lands on the compare page in a new tab, if they've
+//   been on the site earlier in that session, the page can render instantly
+//   from sessionStorage while a fresh copy loads silently in the background.
+let _carsCache = null;
+let _carsCacheTime = 0;
+const CARS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CARS_STORAGE_KEY = 'ds_cars_cache_v1';
+
+const readCarsFromSessionStorage = () => {
+  try {
+    const raw = sessionStorage.getItem(CARS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.data || !parsed.time) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const writeCarsToSessionStorage = (data, time) => {
+  try {
+    sessionStorage.setItem(CARS_STORAGE_KEY, JSON.stringify({ data, time }));
+  } catch {
+    // sessionStorage can throw in private-browsing/quota-exceeded cases —
+    // safe to ignore, the in-memory cache still works for this tab.
+  }
+};
+
 export const api = {
   // Admin login
   adminLogin: async (password) => {
@@ -202,13 +235,29 @@ export const api = {
 
   // Get all cars with full hierarchy (Brand → Model → Variant)
   getAllCars: async () => {
+    const now = Date.now();
+    if (_carsCache && (now - _carsCacheTime) < CARS_CACHE_TTL_MS) {
+      return _carsCache;
+    }
+    const stored = readCarsFromSessionStorage();
+    if (stored && (now - stored.time) < CARS_CACHE_TTL_MS) {
+      _carsCache = stored.data;
+      _carsCacheTime = stored.time;
+      return stored.data;
+    }
     try {
       const response = await fetch(`${API_URL}/cars`, {
         headers: {
           'Accept': 'application/json',
         },
       });
-      return await handleResponse(response);
+      const data = await handleResponse(response);
+      if (data.success) {
+        _carsCache = data;
+        _carsCacheTime = now;
+        writeCarsToSessionStorage(data, now);
+      }
+      return data;
     } catch (error) {
       console.error('❌ Get all cars error:', error);
       return {
@@ -216,6 +265,52 @@ export const api = {
         message: 'Network error. Please check your connection.',
       };
     }
+  },
+
+  // Returns cached car data synchronously if any exists (even if stale),
+  // so a page can render immediately instead of showing a loading state,
+  // while a fresh copy is fetched in the background. Falls back to a
+  // normal awaited fetch if nothing is cached yet (e.g. very first visit
+  // in a fresh tab with no prior prefetch).
+  getAllCarsInstant: async (onFresh) => {
+    const now = Date.now();
+    let instant = null;
+
+    if (_carsCache) {
+      instant = _carsCache;
+    } else {
+      const stored = readCarsFromSessionStorage();
+      if (stored) {
+        _carsCache = stored.data;
+        _carsCacheTime = stored.time;
+        instant = stored.data;
+      }
+    }
+
+    const isStale = !instant || (now - _carsCacheTime) >= CARS_CACHE_TTL_MS;
+
+    if (instant && !isStale) {
+      return instant; // fresh cache — no network call needed at all
+    }
+
+    if (instant && isStale) {
+      // Serve stale data immediately, refresh silently in the background.
+      api.getAllCars().then((fresh) => {
+        if (fresh.success && onFresh) onFresh(fresh);
+      });
+      return instant;
+    }
+
+    // Nothing cached at all — only case where we actually have to wait.
+    return api.getAllCars();
+  },
+
+  // Fire-and-forget prefetch, meant to be called as early as possible
+  // (e.g. on app mount) so that by the time the user navigates to the
+  // Compare Cars page, the data is already cached and the page can render
+  // without any visible loading state.
+  prefetchCars: () => {
+    api.getAllCars().catch(() => {});
   },
 
   // Get all brands

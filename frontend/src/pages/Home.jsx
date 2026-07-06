@@ -14,6 +14,8 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SearchBar from '../components/SearchBar'
+import Carousel from '../components/Carousel'
+import CarouselCard from '../components/CarouselCard'
 import { useTheme } from '../context/ThemeContext'
 import { getFeaturedTravelogues } from '../data/traveloguesData'
 
@@ -111,12 +113,12 @@ const Home = () => {
   // ========================================
   const fetchTravelogues = async () => {
     try {
-      console.log('🔄 Fetching travelogues from API...')
+      // console.log('🔄 Fetching travelogues from API...')
       const logs = await getFeaturedTravelogues(4)
-      console.log('✅ Received logs:', logs)
+      // console.log('✅ Received logs:', logs)
       setTravelogues(logs)
       setLoading(false)
-      console.log('✅ State updated - travelogues:', logs.length, 'items')
+      // console.log('✅ State updated - travelogues:', logs.length, 'items')
     } catch (error) {
       console.error('❌ Error fetching featured travelogues:', error)
       setLoading(false)
@@ -124,7 +126,7 @@ const Home = () => {
   }
 
   useEffect(() => {
-    console.log('🔄 Home component mounted - fetching travelogues...')
+    // console.log('🔄 Home component mounted - fetching travelogues...')
     fetchTravelogues()
   }, [])
 
@@ -141,113 +143,142 @@ const Home = () => {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: 'easeOut' } }
   }
 
-// ========================================
-// Hero Section with Banner Slider
-// ========================================
-const renderHero = () => {
-  const [currentSlide, setCurrentSlide] = useState(0)
+  // ========================================
+  // Hero Section with Banner Slider
+  // ========================================
+  const renderHero = () => {
+    const [currentSlide, setCurrentSlide] = useState(0)
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % BANNERS.length)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % BANNERS.length)
+      }, 12000) // 10 seconds
+      return () => clearInterval(interval)
+    }, [])
 
-  const goToSlide = (index) => {
-    setCurrentSlide(index)
-  }
+    const goToSlide = (index) => {
+      setCurrentSlide(index)
+    }
 
-  return (
-    <section
-      className="relative w-full overflow-hidden bg-transparent pt-[var(--header-height,72px)] lg:pt-0"
-    >
-      <div className="w-full relative aspect-[4/5] lg:aspect-[1672/941]">
-        
-        {BANNERS.map((banner, index) => (
-          <div
-            key={banner.id}
-            className={`absolute inset-0 w-full h-full transition-opacity duration-700 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
-            }`}
-          >
-            <picture>
-              <source media="(max-width: 1023px)" srcSet={banner.mobileImage} />
-              <img
-                src={banner.image}
-                alt={banner.title}
-                className="w-full h-full object-contain block"
-              />
-            </picture>
+    return (
+      <section
+        className="relative w-full overflow-hidden bg-transparent pt-[var(--header-height,72px)] lg:pt-0"
+      >
+        <style>{`
+        .ds-hero-box { aspect-ratio: 4 / 5; }
+        @media (min-width: 1024px) {
+          .ds-hero-box { aspect-ratio: 1672 / 941; }
+        }
+        .ds-hero-media {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: contain !important;
+          object-position: center !important;
+          display: block !important;
+        }
+      `}</style>
+        <div className="w-full relative aspect-[4/5] lg:aspect-[1672/941] ds-hero-box">
 
-            <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-gradient-to-tr from-black/55 via-black/10 to-transparent pointer-events-none"></div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 12 }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-              className="absolute bottom-2 left-2 xs:bottom-3 xs:left-3 sm:bottom-5 sm:left-5 md:bottom-8 md:left-8 z-10"
+          {BANNERS.map((banner, index) => (
+            <div
+              key={banner.id}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
             >
-              <Link
-                to={banner.link}
-                className="inline-block whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 rounded-lg sm:rounded-xl font-semibold text-[11px] xs:text-xs sm:text-sm md:text-base transition-all duration-300 hover:scale-105 hover:shadow-xl text-black"
-                style={{
-                  background: '#EAB308',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
-                }}
+              <picture>
+                <source media="(max-width: 1023px)" srcSet={banner.mobileImage} />
+                <img
+                  src={banner.image}
+                  alt={banner.title}
+                  className="w-full h-full object-contain block ds-hero-media"
+                />
+              </picture>
+
+              <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-to-tl from-black/55 via-black/10 to-transparent pointer-events-none"></div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 12 }}
+                transition={{ duration: 0.5, delay: 0.25 }}
+                className="absolute bottom-2 right-2 xs:bottom-3 xs:right-3 sm:bottom-5 sm:right-5 md:bottom-8 md:right-8 z-10"
               >
-                {banner.buttonText}
-              </Link>
-            </motion.div>
-          </div>
-        ))}
+                <Link
+                  to={banner.link}
+                  className="inline-block whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-2.5 md:px-8 md:py-3 rounded-lg sm:rounded-xl font-semibold text-[11px] xs:text-xs sm:text-sm md:text-base transition-all duration-300 hover:scale-105 hover:shadow-xl text-black"
+                  style={{
+                    background: '#EAB308',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
+                  }}
+                >
+                  {banner.buttonText}
+                </Link>
+              </motion.div>
+            </div>
+          ))}
 
-        <button
-          onClick={() => goToSlide((currentSlide - 1 + BANNERS.length) % BANNERS.length)}
-          className="absolute left-1.5 xs:left-2 sm:left-4 md:left-6 top-1/2 transform -translate-y-1/2 z-20 w-6 h-6 xs:w-7 xs:h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/30 transition-colors duration-150 flex items-center justify-center text-white border border-white/20"
-          aria-label="Previous slide"
-        >
-          <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <button
-          onClick={() => goToSlide((currentSlide + 1) % BANNERS.length)}
-          className="absolute right-1.5 xs:right-2 sm:right-4 md:right-6 top-1/2 transform -translate-y-1/2 z-20 w-6 h-6 xs:w-7 xs:h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/30 transition-colors duration-150 flex items-center justify-center text-white border border-white/20"
-          aria-label="Next slide"
-        >
-          <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex justify-center items-center gap-1.5 xs:gap-2 absolute bottom-2 xs:bottom-3 sm:bottom-4 md:bottom-5 left-0 right-0 z-20">
-        {BANNERS.map((_, index) => (
+          {/* Left Arrow Button — moved down from the geometric center (which sat
+            right on top of the poster's title/icon text) to ~64% down, which
+            sits in the car-photo/road area on every banner instead of on top
+            of text. Also sized down so it doesn't dominate a narrow phone
+            screen. */}
           <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`rounded-full transition-all duration-300 ${
-              index === currentSlide 
-                ? 'bg-yellow-500 w-4 h-1.5 xs:w-5 xs:h-2' 
-                : 'bg-white/60 w-1.5 h-1.5 xs:h-2'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
-    </section>
-  )
-}
+            onClick={() => goToSlide((currentSlide - 1 + BANNERS.length) % BANNERS.length)}
+            className="absolute left-1.5 xs:left-2 sm:left-4 md:left-6 top-[64%] -translate-y-1/2 transform z-30 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 flex items-center justify-center text-black shadow-lg hover:shadow-xl hover:scale-105"
+            aria-label="Previous slide"
+          >
+            <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Right Arrow Button - same repositioning/resizing as the left one */}
+          <button
+            onClick={() => goToSlide((currentSlide + 1) % BANNERS.length)}
+            className="absolute right-1.5 xs:right-2 sm:right-4 md:right-6 top-[64%] -translate-y-1/2 transform z-30 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 flex items-center justify-center text-black shadow-lg hover:shadow-xl hover:scale-105"
+            aria-label="Next slide"
+          >
+            <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Dots — pulled up well clear of the CTA button (which sits at
+          bottom-2/left-2 on mobile) so the two rows never visually merge into
+          one bar the way they were before. Reverts to a small, tight offset at
+          lg: since the landscape desktop banner is tall enough in real pixels
+          that there's no crowding risk there. */}
+        <div className="flex justify-center items-center gap-1 xs:gap-1.5 sm:gap-2 md:gap-2.5 absolute bottom-10 xs:bottom-12 sm:bottom-14 md:bottom-16 lg:bottom-6 left-0 right-0 z-20">
+          {BANNERS.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className="flex items-center justify-center !bg-transparent !min-h-0 px-0.5 xs:px-1 sm:px-1.5"
+              aria-label={`Go to slide ${index + 1}`}
+            >
+              <span
+                className={`block rounded-full transition-all duration-300 ${index === currentSlide
+                  ? 'bg-yellow-500'
+                  : 'bg-white/40'
+                  } ${index === currentSlide
+                    ? 'w-2 h-0.5 xs:w-3 xs:h-0.5 sm:w-5 sm:h-1 md:w-7 md:h-1.5 lg:w-9 lg:h-2'
+                    : 'w-0.5 h-0.5 xs:w-1 xs:h-0.5 sm:w-1.5 sm:h-1 md:w-1.5 md:h-1.5 lg:w-2 lg:h-2'
+                  }`}
+              />
+            </button>
+          ))}
+        </div>
+      </section>
+    )
+  }
 
   // ========================================
   // Search Section
   // ========================================
   const renderSearchSection = () => {
     return (
-      <section className="pt-12 md:pt-16 transition-colors duration-150">
+      <section className="pt-8 md:pt-12 transition-colors duration-150">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-6 md:mb-8">
@@ -278,24 +309,8 @@ const renderHero = () => {
               viewport={{ once: true }}
               className="flex flex-wrap justify-center gap-2 mt-5"
             >
-              <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Popular searches:</span>
-              {['AWD vs FWD', 'ADAS', 'Spiti Winter', 'Best Tyres', 'ABS'].map((term) => (
-                <React.Fragment key={term}>
-                  <button
-                    onClick={() => {
-                      const searchInput = document.querySelector('input[placeholder*="Search automotive"]')
-                      if (searchInput) {
-                        searchInput.value = term
-                        searchInput.dispatchEvent(new Event('input'))
-                      }
-                    }}
-                    className={`text-xs transition-colors duration-150 ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
-                  >
-                    #{term}
-                  </button>
-                  <span className={isDark ? 'text-gray-700' : 'text-gray-300'}>•</span>
-                </React.Fragment>
-              ))}
+              {/* 
+               */}
             </motion.div>
           </div>
         </div>
@@ -304,30 +319,29 @@ const renderHero = () => {
   }
 
   // ========================================
-  // Stats Cards
+  // Stats Cards - Flat, Thin, Text-based
   // ========================================
   const renderStatsCards = () => {
     return (
-      <div className="container-custom -mt-8 relative z-10">
+      <div className="container-custom mt-6 md:mt-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {STATS.map((stat, idx) => (
             <motion.div
               key={idx}
-              variants={scaleUp}
+              variants={fadeUp}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
               transition={{ delay: idx * 0.08 }}
-              whileHover={{ y: -5 }}
-              className={`rounded-2xl shadow-xl p-4 md:p-6 text-center border transition-colors duration-150 ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-100'}`}
+              className="text-center"
             >
-              <div className="text-2xl md:text-3xl lg:text-4xl font-bold text-yellow-500 mb-1 md:mb-2">
+              <div className={`text-2xl md:text-3xl lg:text-4xl font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-500'} mb-0.5`}>
                 {stat.number}
               </div>
-              <div className={`font-semibold text-sm md:text-base mb-0.5 md:mb-1 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+              <div className={`font-medium text-sm md:text-base ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 {stat.label}
               </div>
-              <div className={`text-xs md:text-sm ${isDark ? 'text-gray-400' : 'text-gray-400'}`}>
+              <div className={`text-xs md:text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                 {stat.description}
               </div>
             </motion.div>
@@ -342,194 +356,124 @@ const renderHero = () => {
   // Two columns side by side with identical card styling
   // Enhanced 3D shadow effect for light theme
   // ========================================
-  const renderCombinedContent = () => {
+  const renderTravelogues = () => {
     const isTraveloguesLoading = loading;
     const hasTravelogues = travelogues && travelogues.length > 0;
-    const hasArticles = LATEST_ARTICLES && LATEST_ARTICLES.length > 0;
 
-    // Card shadow classes based on theme
-    const cardShadowClass = isDark 
-      ? 'shadow-lg hover:shadow-2xl' 
+    const cardShadowClass = isDark
+      ? 'shadow-lg hover:shadow-2xl'
       : 'shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_20px_60px_rgb(0,0,0,0.18)]';
-
     const cardBgClass = isDark ? 'bg-dark-800' : 'bg-white';
 
     return (
-      <section className={`py-12 md:py-16 lg:py-20 transition-colors duration-150 ${isDark ? 'bg-dark-900' : 'bg-gray-50'}`}>
+      <section className={`py-6 md:py-6 transition-colors duration-150 ${isDark ? 'bg-dark-900' : 'bg-gray-50'}`}>
         <div className="container-custom">
-          {/* Section Header */}
           <motion.div
             variants={fadeUp}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
+            className="flex flex-wrap items-end justify-between gap-3 mb-5 md:mb-7"
           >
-            <span className="text-yellow-500 font-bold text-3xl tracking-wider uppercase">
-              Explore
-            </span>
-            <h2
-              className={`text-2xl md:text-3xl lg:text-4xl font-bold mt-2 md:mt-3 ${isDark ? "text-white" : "text-gray-900"}`}
+            <div>
+              <h2 className="text-yellow-500 font-bold text-xl md:text-base tracking-wider uppercase">
+                Travelogue
+              </h2>
+              <h4 className={`text-l md:text-l font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Real Journeys Experiences.
+              </h4>
+            </div>
+            <Link
+              to="/travelogues"
+              className={`shrink-0 ml-auto text-sm font-medium hover:text-yellow-500 transition-colors duration-150 ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
             >
-              Most Popular Articles &amp; Story
-            </h2>
-            <p
-              className={`text-sm md:text-base lg:text-lg mt-2 md:mt-4 max-w-3xl mx-auto ${isDark ? "text-gray-400" : "text-gray-600"}`}
-            >
-              Real driving experiences and expert automotive insights — all in one place.
-            </p>
+              View All →
+            </Link>
           </motion.div>
 
-          {/* Two Column Grid - Side by Side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-            
-            {/* LEFT COLUMN - TRAVELOGUES */}
-            <div>
-              <div className="mb-4 md:mb-6">
-                <h2 className="text-yellow-500 font-bold text-3xl tracking-wider uppercase">
-                  Travelogue
-                </h2>
-                <h5 className={`text-xl md:text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Real Journeys. Real Driving Experiences.
-                </h5>
-                <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Explore real road trips, driving experiences, destination guides, and practical travel stories designed for Indian roads and everyday drivers.
-                </p>
-                <Link 
-                  to="/travelogues" 
-                  className={`inline-block mt-2 text-sm font-medium hover:text-yellow-500 transition-colors duration-150 ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
-                >
-                  View All Travelogues →
-                </Link>
-              </div>
-
-              {isTraveloguesLoading ? (
-                <div className="flex justify-center items-center h-96">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500"></div>
-                </div>
-              ) : !hasTravelogues ? (
-                <div className={`rounded-xl p-8 text-center ${cardBgClass} ${cardShadowClass}`}>
-                  <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No travelogues available</p>
-                </div>
-              ) : (
-                <div className="space-y-4 md:space-y-5">
-                  {travelogues.slice(0, 4).map((log, idx) => (
-                    <motion.div
-                      key={log._id || idx}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: idx * 0.08 }}
-                      whileHover={{ y: -4, scale: 1.01 }}
-                      className={`group rounded-xl overflow-hidden ${cardShadowClass} transition-all duration-300 h-[140px] md:h-[160px] ${cardBgClass} ${!isDark && 'border border-gray-100'}`}
-                    >
-                      <Link to={`/travelogue/${log.slug}`} className="flex h-full">
-                        <div className="w-[140px] md:w-[160px] h-full flex-shrink-0 overflow-hidden">
-                          <img
-                            src={log.image || '/images/travelogue/default.png'}
-                            alt={log.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => {
-                              e.target.src = '/images/travelogue/default.png';
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1 p-3 md:p-4 flex flex-col justify-between min-w-0">
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="px-2 py-0.5 bg-yellow-500 text-gray-900 text-[10px] font-semibold rounded-full whitespace-nowrap">
-                                {log.category || 'Travel'}
-                              </span>
-                              {log.readTime && (
-                                <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                                  {log.readTime}
-                                </span>
-                              )}
-                            </div>
-                            <h4 className={`font-bold text-sm md:text-base leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                              {log.title}
-                            </h4>
-                            <p className={`text-xs md:text-sm mt-1 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {log.excerpt}
-                            </p>
-                          </div>
-                          <div className="flex items-center text-yellow-500 font-semibold text-xs md:text-sm hover:text-yellow-600 transition-colors duration-150 mt-1">
-                            Read More →
-                          </div>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+          {isTraveloguesLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500"></div>
             </div>
-
-            {/* RIGHT COLUMN - ARTICLES */}
-            <div>
-              <div className="mb-4 md:mb-6">
-                <h2 className="text-yellow-500 font-bold text-3xl tracking-wider uppercase">
-                  Automotive Insights Hub
-                </h2>
-                <h5 className={`text-2xl md:text-xl font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Featured Technology Guides
-                </h5>
-                <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Learn modern automotive technologies, safety systems and engineering concepts through practical, easy-to-understand articles.
-                </p>
-                <Link 
-                  to="/articles" 
-                  className={`inline-block mt-2 text-sm font-medium hover:text-yellow-500 transition-colors duration-150 ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
-                >
-                  View All Articles →
-                </Link>
-              </div>
-
-              <div className="space-y-4 md:space-y-5">
-                {LATEST_ARTICLES.slice(0, 4).map((article, idx) => (
-                  <motion.article
-                    key={idx}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.08 }}
-                    whileHover={{ y: -4, scale: 1.01 }}
-                    className={`group rounded-xl overflow-hidden ${cardShadowClass} transition-all duration-300 h-[140px] md:h-[160px] ${cardBgClass} ${!isDark && 'border border-gray-100'}`}
-                  >
-                    <Link to={`/article/${article.slug}`} className="flex h-full">
-                      <div className="w-[140px] md:w-[160px] h-full flex-shrink-0 overflow-hidden">
-                        <img 
-                          src={article.image} 
-                          alt={article.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        />
-                      </div>
-                      <div className="flex-1 p-3 md:p-4 flex flex-col justify-between min-w-0">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="px-2 py-0.5 bg-yellow-500 text-gray-900 text-[10px] font-semibold rounded-full whitespace-nowrap">
-                              {article.category}
-                            </span>
-                            <span className={`text-[10px] ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                              {article.readTime}
-                            </span>
-                          </div>
-                          <h4 className={`font-bold text-sm md:text-base leading-tight line-clamp-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                            {article.title}
-                          </h4>
-                          <p className={`text-xs md:text-sm mt-1 line-clamp-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {article.excerpt}
-                          </p>
-                        </div>
-                        <div className="flex items-center text-yellow-500 font-semibold text-xs md:text-sm hover:text-yellow-600 transition-colors duration-150 mt-1">
-                          Read Article →
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.article>
-                ))}
-              </div>
+          ) : !hasTravelogues ? (
+            <div className={`rounded-xl p-8 text-center ${cardBgClass} ${cardShadowClass}`}>
+              <p className={isDark ? 'text-gray-400' : 'text-gray-500'}>No travelogues available</p>
             </div>
-          </div>
+          ) : (
+            <Carousel ariaLabel="Travel Logs">
+              {travelogues.slice(0, 8).map((log, idx) => (
+                <CarouselCard
+                  key={log._id || idx}
+                  to={`/travelogue/${log.slug}`}
+                  image={log.thumbnail || log.image || '/images/travelogue/default.png'}
+                  fallbackImage="/images/travelogue/default.png"
+                  category={log.category || 'Travel'}
+                  readTime={log.readTime}
+                  title={log.title}
+                  excerpt={log.excerpt}
+                  isDark={isDark}
+                  cardBgClass={cardBgClass}
+                  cardShadowClass={cardShadowClass}
+                  delay={idx * 0.06}
+                />
+              ))}
+            </Carousel>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  const renderTechnologyGuides = () => {
+    const cardShadowClass = isDark
+      ? 'shadow-lg hover:shadow-2xl'
+      : 'shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_20px_60px_rgb(0,0,0,0.18)]';
+    const cardBgClass = isDark ? 'bg-dark-800' : 'bg-white';
+
+    return (
+      <section className={`py-4 md:py-4 border-t transition-colors duration-150 ${isDark ? 'bg-dark-900 border-dark-700' : 'bg-gray-50 border-gray-200'}`}>
+        <div className="container-custom">
+          <motion.div
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="flex flex-wrap items-end justify-between gap-3 mb-5 md:mb-7"
+          >
+            <div>
+              <span className="text-yellow-500 font-bold text-xl md:text-base tracking-wider uppercase">
+                Automotive Insights Hub
+              </span>
+              <h4 className={`text-2xl md:text-l font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Featured Technology Guides
+              </h4>
+            </div>
+            <Link
+              to="/articles"
+              className={`shrink-0 ml-auto text-sm font-medium hover:text-yellow-500 transition-colors duration-150 ${isDark ? 'text-gray-400 hover:text-yellow-400' : 'text-gray-500 hover:text-yellow-600'}`}
+            >
+              View All →
+            </Link>
+          </motion.div>
+
+          <Carousel ariaLabel="Technology Guides">
+            {LATEST_ARTICLES.slice(0, 8).map((article, idx) => (
+              <CarouselCard
+                key={idx}
+                to={`/article/${article.slug}`}
+                image={article.image}
+                category={article.category}
+                readTime={article.readTime}
+                title={article.title}
+                excerpt={article.excerpt}
+                ctaLabel="Read Article →"
+                isDark={isDark}
+                cardBgClass={cardBgClass}
+                cardShadowClass={cardShadowClass}
+                delay={idx * 0.06}
+              />
+            ))}
+          </Carousel>
         </div>
       </section>
     )
@@ -540,7 +484,7 @@ const renderHero = () => {
   // ========================================
   const renderNewsletter = () => {
     return (
-      <section className={`py-20 transition-colors duration-150 ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
+      <section className={`py-14 md:py-20 transition-colors duration-150 ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
         <div className="container-custom">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto text-center">
             <h2 className={`text-3xl md:text-4xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -572,20 +516,23 @@ const renderHero = () => {
     <>
       {renderHero()}
 
-      <section className={`transition-colors duration-150 border-b ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-yellow-50 border-gray-100'} pb-8 md:pb-12`}>
+      <section className={`transition-colors duration-150 border-b ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-gray-50 border-gray-100'} pb-6 md:pb-10`}>
         {renderSearchSection()}
         {renderStatsCards()}
       </section>
 
-      {/* COMBINED SECTION - Travelogues & Articles side by side */}
-      {renderCombinedContent()}
+      {/* Travel Logs — horizontal carousel */}
+      {renderTravelogues()}
+
+      {/* Technology Guides — horizontal carousel */}
+      {renderTechnologyGuides()}
 
       {/* Testimonials Section */}
-      <section className={`py-20 transition-colors duration-150 ${isDark ? 'bg-dark-900' : 'bg-gray-50'}`}>
+      <section className={`py-4 md:py-4 transition-colors duration-150 ${isDark ? 'bg-dark-900' : 'bg-gray-50'}`}>
         <div className="container-custom">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center max-w-4xl mx-auto">
-            <span className="text-yellow-500 font-semibold text-sm tracking-wider uppercase">Testimonials</span>
-            <h2 className={`text-3xl md:text-4xl font-bold mt-3 mb-12 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            <span className="text-yellow-500 font-bold text-xl tracking-wider uppercase">Testimonials</span>
+            <h2 className={`text-3xl md:text-4xl font-bold mt-3 mb-10 md:mb-12 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               What Our Readers Say
             </h2>
 

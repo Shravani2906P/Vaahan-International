@@ -16,12 +16,32 @@ const Variant = require('../models/Variant');
 const mongoose = require('mongoose');
 
 // ========================================
+// In-memory cache for the full car hierarchy
+// ========================================
+// Car data changes rarely (new listings, price updates) but this endpoint
+// gets hit on every single Compare Cars page load. On Vercel, module-level
+// variables persist across "warm" invocations of the same serverless
+// instance, so caching here means most requests skip the database
+// entirely instead of re-running the 3 queries every time.
+let _hierarchyCache = null;
+let _hierarchyCacheTime = 0;
+const HIERARCHY_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// ========================================
 // BRAND CONTROLLERS
 // ========================================
 
 // Get full car hierarchy (Brand → Model → Variant)
 exports.getFullCarHierarchy = async (req, res) => {
   try {
+    const now = Date.now();
+    if (_hierarchyCache && (now - _hierarchyCacheTime) < HIERARCHY_CACHE_TTL_MS) {
+      return res.status(200).json({
+        success: true,
+        data: _hierarchyCache,
+      });
+    }
+
     // ✅ OPTIMIZED: 3 batched queries run in parallel instead of the
     // previous "1 + one-per-brand + one-per-model" sequential pattern
     // (which was 50-100+ round trips on a real dataset). Response shape,
@@ -94,6 +114,9 @@ exports.getFullCarHierarchy = async (req, res) => {
         }),
       };
     });
+
+    _hierarchyCache = result;
+    _hierarchyCacheTime = now;
 
     res.status(200).json({
       success: true,

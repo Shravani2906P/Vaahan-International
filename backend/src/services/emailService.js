@@ -5,8 +5,8 @@ File Name : emailService.js
 Author : Tahseen Raza
 Created Date : 2026-06-19
 Description : Email service for sending OTP and notifications
-Company : Vaahan International
-Copyright : (c) 2026 Vaahan International. All rights reserved.
+Company : DryvSquad
+Copyright : (c) 2026 DryvSquad. All rights reserved.
 ================================================================================
 */
 
@@ -44,7 +44,7 @@ const createTransporter = () => {
   // Production email providers
   console.log('📧 Using production email service');
 
-  // Brevo (Sendinblue) - ADDED
+  // Brevo (Sendinblue)
   if (process.env.EMAIL_PROVIDER === 'brevo') {
     console.log('📧 Using Brevo email service');
     return nodemailer.createTransport({
@@ -128,7 +128,15 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
       return { success: false, error: 'Email service not configured properly' };
     }
 
-    const subject = 'Your OTP for Dryvsquad';
+    // ✅ FIX: Get sender details from .env
+    const senderName = process.env.SENDER_NAME || 'DryvSquad';
+    const senderEmail = process.env.EMAIL_FROM || 'contact@dryvsquad.com';
+    
+    // ✅ FIX: Combine to proper format: "Display Name" <email@domain.com>
+    const fromAddress = `"${senderName}" <${senderEmail}>`;
+
+    const subject = `Your OTP for ${senderName}`;
+    
     const html = `
       <!DOCTYPE html>
       <html>
@@ -164,14 +172,14 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🚗 Dryvsquad</h1>
+            <h1>🚗 ${senderName}</h1>
             <p>Your trusted automotive partner</p>
           </div>
           <div class="content">
             <p class="greeting">Hello,</p>
             <p class="message">
               You requested to ${purpose === 'login' ? 'sign in to' : 'verify your account on'} 
-              <strong>Dryvsquad</strong>.
+              <strong>${senderName}</strong>.
             </p>
             <p class="message">Please use the following OTP to complete your ${purpose === 'login' ? 'login' : 'verification'}:</p>
             
@@ -199,7 +207,7 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
             </div>
 
             <p style="color: #888; font-size: 14px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-              <strong>Need help?</strong> Contact us at support@vaahan.com
+              <strong>Need help?</strong> Contact us at ${process.env.ADMIN_EMAIL || 'contact@dryvsquad.com'}
             </p>
           </div>
           <div class="footer">
@@ -207,7 +215,7 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
               <span class="badge">${purpose === 'login' ? '🔐 Login' : '✅ Verify'}</span>
             </p>
             <p style="margin-top: 8px;">
-              &copy; ${new Date().getFullYear()} Dryvsquad. All rights reserved.
+              &copy; ${new Date().getFullYear()} ${senderName}. All rights reserved.
             </p>
             <p style="font-size: 12px; margin-top: 4px;">
               This is an automated email, please do not reply.
@@ -218,11 +226,9 @@ const sendOTPEmail = async (email, otp, purpose = 'verify') => {
       </html>
     `;
 
-    // Use the verified sender email
-    const fromEmail = process.env.EMAIL_FROM || process.env.BREVO_SMTP_USER || process.env.EMAIL_USER || 'noreply@vaahan.com';
-    
+    // ✅ FIX: Use the formatted from address with display name
     const mailOptions = {
-      from: fromEmail,
+      from: fromAddress,  // This is now: "DryvSquad" <contact@dryvsquad.com>
       to: email,
       subject,
       html,

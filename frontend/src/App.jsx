@@ -13,6 +13,7 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 import { useEffect } from 'react'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
+import { api } from './services/api'
 import Home from './pages/Home'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -41,9 +42,17 @@ const ScrollToTop = () => {
 }
 
 function App() {
+
   const location = useLocation()
   const navigate = useNavigate()
   const isAiModePage = location.pathname === '/ai-mode'
+  // Kick off the Compare Cars data fetch as early as possible — right when
+  // the app mounts, not when the user navigates to /compare-cars. By the
+  // time they click through, the data is usually already cached, so that
+  // page can render without any visible loading state.
+  useEffect(() => {
+    api.prefetchCars()
+  }, [])
 
   return (
     <ThemeProvider>

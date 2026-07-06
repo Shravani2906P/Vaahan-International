@@ -32,12 +32,12 @@ const connectDB = async () => {
 const loadTravelogueData = () => {
   try {
     const jsonPath = path.join(__dirname, '../data/travelogues.json');
-    
+
     if (!fs.existsSync(jsonPath)) {
       console.error('❌ travelogues.json not found at:', jsonPath);
       process.exit(1);
     }
-    
+
     const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
     console.log(`📁 Loaded ${data.length} travelogues from travelogues.json`);
     return data;
@@ -51,23 +51,23 @@ const loadTravelogueData = () => {
 const migrateTravelogues = async () => {
   console.log('\n📚 Starting Travelogue Data Migration...\n');
   console.log('─'.repeat(50));
-  
+
   await connectDB();
-  
+
   console.log('\n🗑️ Clearing existing travelogues...');
   await Travelogue.deleteMany({});
   console.log('✅ Existing travelogues cleared\n');
-  
+
   const traveloguesData = loadTravelogueData();
-  
+
   if (traveloguesData.length === 0) {
     console.log('⚠️ No travelogues to migrate.');
     process.exit(0);
   }
-  
+
   let count = 0;
   let errors = [];
-  
+
   for (const travelogueData of traveloguesData) {
     try {
       const travelogue = new Travelogue({
@@ -76,7 +76,10 @@ const migrateTravelogues = async () => {
         category: travelogueData.category,
         excerpt: travelogueData.excerpt,
         content: travelogueData.content,
+
         image: travelogueData.image,
+        thumbnail: travelogueData.thumbnail,
+
         author: travelogueData.author,
         date: travelogueData.date,
         readTime: travelogueData.readTime,
@@ -85,10 +88,10 @@ const migrateTravelogues = async () => {
         seoTitle: travelogueData.seoTitle || travelogueData.title,
         seoDescription: travelogueData.seoDescription || travelogueData.excerpt,
       });
-      
+
       await travelogue.save();
       count++;
-      
+
       if (count % 5 === 0 || count === traveloguesData.length) {
         console.log(`   ✅ Migrated ${count}/${traveloguesData.length} travelogues...`);
       }
@@ -97,22 +100,22 @@ const migrateTravelogues = async () => {
       errors.push({ title: travelogueData.title, error: error.message });
     }
   }
-  
+
   console.log('\n' + '─'.repeat(50));
   console.log(`\n📊 Migration Summary:`);
   console.log(`   Total Travelogues: ${traveloguesData.length}`);
   console.log(`   Successfully Migrated: ${count}`);
   console.log(`   Errors: ${errors.length}`);
-  
+
   if (errors.length > 0) {
     console.log('\n⚠️ Errors:');
     errors.forEach(err => {
       console.log(`   - ${err.title}: ${err.error}`);
     });
   }
-  
+
   console.log('\n✅ Travelogue Migration Completed Successfully!');
-  
+
   process.exit(0);
 };
 

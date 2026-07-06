@@ -21,17 +21,8 @@ import { api } from '../services/api'
 // Static category data
 const DESKTOP_CATEGORIES = [
   {
-    name: "Feature Reviews",
-    baseRoute: "/article",
-    articles: [
-      { title: "AWD vs FWD: The ₹2 Lakh Question", slug: "awd-vs-fwd" },
-      { title: "ADAS Lane Keep Assist Review", slug: "adas-lane-keep-assist" },
-      { title: "FWD Car in Spiti Winter", slug: "fwd-car-spiti-winter" },
-      { title: "Best Tyres for Highway Drives", slug: "best-highway-tyres" }
-    ]
-  },
-  {
     name: "New Launches",
+    path: "/articles",
     baseRoute: "/article",
     articles: [
       { title: "2026 Hyundai Creta Launch", slug: "hyundai-creta-2026-launch" },
@@ -40,6 +31,7 @@ const DESKTOP_CATEGORIES = [
   },
   {
     name: "Tech Insights",
+    path: "/articles",
     baseRoute: "/article",
     articles: [
       { title: "What is ADAS? Complete Guide", slug: "what-is-adas" },
@@ -50,6 +42,7 @@ const DESKTOP_CATEGORIES = [
   },
   {
     name: "Travelogues",
+    path: "/travelogues",
     baseRoute: "/travelogue",
     articles: [
       { title: "First Job: Bike vs Car?", slug: "first-job-bike-vs-car" },
@@ -272,147 +265,100 @@ const CommonHeader = () => {
   }, [])
 
   // Desktop Categories Dropdown
-  const CategoriesDropdown = useCallback(() => {
-    const [isCatOpen, setIsCatOpen] = useState(false)
-    const [activeCat, setActiveCat] = useState(null)
-    const timeoutRef = useRef(null)
-    const dropdownRef = useRef(null)
+ const CategoriesDropdown = useCallback(() => {
+  const [isCatOpen, setIsCatOpen] = useState(false)
+  const timeoutRef = useRef(null)
+  const dropdownRef = useRef(null)
 
-    const handleMouseEnter = () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      setIsCatOpen(true)
-    }
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    setIsCatOpen(true)
+  }
 
-    const handleMouseLeave = () => {
-      timeoutRef.current = setTimeout(() => {
+  const handleMouseLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setIsCatOpen(false)
+    }, 200)
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsCatOpen(false)
-        setActiveCat(null)
-      }, 200)
-    }
-
-    const handleCategoryMouseEnter = (categoryName) => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      setActiveCat(categoryName)
-    }
-
-    const handleCategoryMouseLeave = () => {
-      timeoutRef.current = setTimeout(() => {
-        setActiveCat(null)
-      }, 200)
-    }
-
-    const handleSubmenuMouseEnter = (categoryName) => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      setActiveCat(categoryName)
-    }
-
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-          setIsCatOpen(false)
-          setActiveCat(null)
-        }
       }
-      document.addEventListener('click', handleClickOutside)
-      return () => document.removeEventListener('click', handleClickOutside)
-    }, [])
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
-    useEffect(() => {
-      return () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      }
-    }, [])
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
 
-    const catTextColor = isDark ? 'text-white' : 'text-gray-900'
-    const catSubTextColor = isDark ? 'text-gray-400' : 'text-gray-500'
-    const catHoverBg = isDark ? 'hover:bg-dark-700' : 'hover:bg-gray-100'
-    const catBorderColor = isDark ? 'border-dark-700' : 'border-gray-100'
-    const catBgColor = isDark ? 'bg-dark-800' : 'bg-white'
-    const catHoverText = isDark ? 'hover:text-yellow-400' : 'hover:text-gray-700'
+  const catTextColor = isDark ? 'text-white' : 'text-gray-900'
+  const catSubTextColor = isDark ? 'text-gray-400' : 'text-gray-500'
+  const catHoverBg = isDark ? 'hover:bg-dark-700' : 'hover:bg-gray-100'
+  const catBorderColor = isDark ? 'border-dark-700' : 'border-gray-100'
+  const catBgColor = isDark ? 'bg-dark-800' : 'bg-white'
+  const catHoverText = isDark ? 'hover:text-yellow-400' : 'hover:text-gray-700'
 
-    return (
-      <div
-        className="relative inline-block"
-        ref={dropdownRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <button className={`flex items-center gap-1 font-semibold text-sm xl:text-[16px] tracking-wide transition-colors duration-300 ${catTextColor} ${catHoverText}`}>
-          Categories
-          <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-150 ${isCatOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
+  return (
+    <div
+      className="relative inline-block"
+      ref={dropdownRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button className={`flex items-center gap-1 font-semibold text-sm xl:text-[16px] tracking-wide transition-colors duration-300 ${catTextColor} ${catHoverText}`}>
+        Categories
+        <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-150 ${isCatOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-        {isCatOpen && (
-          <div
-            className={`absolute top-full left-0 mt-1 w-56 sm:w-64 md:w-72 rounded-lg shadow-xl border ${catBorderColor} z-50 ${catBgColor}`}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+      {isCatOpen && (
+        <div
+          className={`absolute top-full left-0 mt-1 w-56 sm:w-64 md:w-72 rounded-lg shadow-xl border ${catBorderColor} z-50 ${catBgColor}`}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <Link
+            to="/compare-cars"
+            className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor}`}
+            onClick={() => setIsCatOpen(false)}
           >
+            <div>
+              <div className={`font-bold text-sm sm:text-base ${catTextColor}`}>Compare Cars</div>
+              <div className={`text-[10px] sm:text-xs ${catSubTextColor}`}>Side by side comparison</div>
+            </div>
+            <span className="text-yellow-500 text-xs sm:text-sm">→</span>
+          </Link>
+
+          {DESKTOP_CATEGORIES.map((category, idx) => (
             <Link
-              to="/compare-cars"
-              className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor}`}
+              key={idx}
+              to={category.path}
+              className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor} last:border-0`}
               onClick={() => setIsCatOpen(false)}
             >
               <div>
-                <div className={`font-bold text-sm sm:text-base ${catTextColor}`}>Compare Cars</div>
-                <div className={`text-[10px] sm:text-xs ${catSubTextColor}`}>Side by side comparison</div>
+                <div className={`font-semibold text-sm sm:text-base ${catTextColor}`}>
+                  {category.name}
+                </div>
+                <div className={`text-[10px] sm:text-xs ${catSubTextColor}`}>
+                  {category.articles.length} articles
+                </div>
               </div>
               <span className="text-yellow-500 text-xs sm:text-sm">→</span>
             </Link>
-
-            {DESKTOP_CATEGORIES.map((category, idx) => (
-              <div
-                key={idx}
-                className={`relative border-b ${catBorderColor} last:border-0`}
-                onMouseEnter={() => handleCategoryMouseEnter(category.name)}
-                onMouseLeave={handleCategoryMouseLeave}
-              >
-                <div className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${catHoverBg} cursor-pointer transition-colors duration-200`}>
-                  <div>
-                    <div className={`font-semibold text-sm sm:text-base ${catTextColor}`}>{category.name}</div>
-                    <div className={`text-[10px] sm:text-xs ${catSubTextColor}`}>{category.articles.length} articles</div>
-                  </div>
-                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-
-                {activeCat === category.name && (
-                  <div
-                    className={`absolute top-0 right-full mr-0 w-56 sm:w-64 md:w-80 rounded-lg shadow-xl border ${catBorderColor} z-50 ${catBgColor}`}
-                    style={{ left: 'auto', right: '100%' }}
-                    onMouseEnter={() => handleSubmenuMouseEnter(category.name)}
-                    onMouseLeave={handleCategoryMouseLeave}
-                  >
-                    <div className="py-2">
-                      <div className={`px-3 sm:px-4 py-1.5 sm:py-2 ${isDark ? 'bg-dark-700' : 'bg-gray-50'} border-b ${catBorderColor}`}>
-                        <span className={`font-semibold text-sm sm:text-base ${catTextColor}`}>{category.name}</span>
-                        <span className={`text-[10px] sm:text-xs ${catSubTextColor} ml-2`}>({category.articles.length})</span>
-                      </div>
-                      {category.articles.map((article, articleIdx) => (
-                        <Link
-                          key={articleIdx}
-                          to={`${category.baseRoute || '/article'}/${article.slug}`}
-                          className={`block px-3 sm:px-4 py-1.5 sm:py-2 ${catHoverBg} transition-colors duration-200`}
-                          onClick={() => setIsCatOpen(false)}
-                        >
-                          <span className={`text-xs sm:text-sm ${catTextColor} ${catHoverText}`}>
-                            {article.title}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }, [isDark])
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}, [isDark])
 
   // Consistent text classes
   const navLinkClasses = `font-semibold text-sm xl:text-[16px] tracking-wide transition-colors duration-300`
@@ -772,9 +718,7 @@ const CommonHeader = () => {
                     </AnimatePresence>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 dark:border-dark-700">
-                    <ThemeToggle />
-                  </div>
+                  
 
                   <Link
                     to="/contact"
@@ -796,6 +740,10 @@ const CommonHeader = () => {
                   >
                     Get Started
                   </Link>
+
+                  <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 dark:border-dark-700">
+                    <ThemeToggle />
+                  </div>
                 </div>
               </motion.div>
             )}

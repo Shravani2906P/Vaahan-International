@@ -31,8 +31,8 @@ const CommonFooter = () => {
   ]
 
   const socialIcons = [
-    { name: 'LinkedIn', icon: 'in', url: '#', color: 'hover:bg-blue-700' },
-    { name: 'Instagram', icon: 'ig', url: '#', color: 'hover:bg-pink-600' },
+    { name: 'LinkedIn', icon: 'in', url: 'https://www.linkedin.com/showcase/dryvsquad/', color: 'hover:bg-blue-700' },
+    { name: 'Instagram', icon: 'ig', url: 'https://www.instagram.com/dryvsquad?igsh=MTBlamx3dzNmajV5&utm_source=qr', color: 'hover:bg-pink-600' },
     { name: 'Twitter', icon: 'tw', url: '#', color: 'hover:bg-blue-500' },
     { name: 'Facebook', icon: 'fb', url: '#', color: 'hover:bg-blue-800' },
   ]

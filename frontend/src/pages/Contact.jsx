@@ -267,7 +267,7 @@ const Contact = () => {
                   <span className="text-xl sm:text-2xl shrink-0">⏰</span>
                   <div className="min-w-0">
                     <h4 className={`font-semibold text-sm sm:text-base ${isDark ? 'text-white' : 'text-gray-800'}`}>Response Time</h4>
-                    <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Within 24–48 hours</p>
+                    <p className={`text-sm sm:text-base ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Within 2-4 hours</p>
                   </div>
                 </div>
               </div>

@@ -645,16 +645,19 @@ const StickyComparisonHeader = ({ car1, car2, onEdit, onClose, isDark }) => {
       <div className="container-custom">
         <div className="max-w-6xl mx-auto">
           {/* Label row — desktop/tablet only, kept out of the flow on phones to save height */}
-          <div className="hidden md:flex justify-center pt-2">
+          {/* <div className="hidden md:flex justify-center pt-2">
             <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest bg-gray-100 dark:bg-dark-800 px-3 py-1.5 rounded-full border border-gray-200 dark:border-dark-600 shadow-sm">
               Comparison View
             </span>
-          </div>
+          </div> */}
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-6 py-2.5 sm:py-4 md:py-5 items-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 py-2.5 sm:py-4 md:py-5 items-center">
+
+            {/* Parameter placeholder - desktop only, keeps car columns aligned with the rows below */}
+            <div className="hidden md:block" aria-hidden="true"></div>
 
             {/* Car 1 */}
-            <div className="flex items-center justify-center relative md:border-r md:border-gray-200 dark:md:border-dark-700 min-w-0">
+            <div className="col-start-1 md:col-start-2 flex items-center justify-center relative md:border-r md:border-gray-200 dark:md:border-dark-700 min-w-0">
               <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 <div className="w-10 h-8 sm:w-16 sm:h-12 shrink-0 flex items-center justify-center bg-[#f4f5f7] dark:bg-dark-800 rounded p-1 border border-gray-100 dark:border-dark-600">
                   <img 
@@ -679,7 +682,7 @@ const StickyComparisonHeader = ({ car1, car2, onEdit, onClose, isDark }) => {
             </div>
 
             {/* Car 2 */}
-            <div className="flex items-center justify-center min-w-0">
+            <div className="col-start-2 md:col-start-3 flex items-center justify-center min-w-0">
               <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                 <div className="w-10 h-8 sm:w-16 sm:h-12 shrink-0 flex items-center justify-center bg-[#f4f5f7] dark:bg-dark-800 rounded p-1 border border-gray-100 dark:border-dark-600">
                   <img 
@@ -799,56 +802,70 @@ const CompareCars = () => {
   const carCardRef2 = useRef(null)
 
   useEffect(() => {
-    const fetchCarData = async () => {
-      try {
-        setLoading(true)
-        setDataError(null)
+    let cancelled = false
 
-        const response = await api.getAllCars()
-
-        if (response.success) {
-          const flattened = []
-          response.data.forEach(brand => {
-            brand.models.forEach(model => {
-              model.variants.forEach(variant => {
-                flattened.push({
-                  id: variant._id,
-                  brand: brand.brand,
-                  model: model.name,
-                  variant: variant.name,
-                  slug: model.slug,
-                  image: model.image,
-                  price: variant.price,
-                  exShowroomPrice: variant.exShowroomPrice,
-                  engine: variant.engine,
-                  torque: variant.torque,
-                  power: variant.power,
-                  mileage: variant.mileage,
-                  torqueNumeric: variant.torqueNumeric,
-                  powerNumeric: variant.powerNumeric,
-                  mileageNumeric: variant.mileageNumeric,
-                  overallScore: variant.overallScore || 0,
-                  scores: variant.scores || null,
-                  factorScores: variant.factorScores || null,
-                  specifications: variant.specifications || {},
-                })
-              })
+    const applyResponse = (response) => {
+      if (!response.success) {
+        setDataError(response.message || 'Failed to load car data')
+        return
+      }
+      const flattened = []
+      response.data.forEach(brand => {
+        brand.models.forEach(model => {
+          model.variants.forEach(variant => {
+            flattened.push({
+              id: variant._id,
+              brand: brand.brand,
+              model: model.name,
+              variant: variant.name,
+              slug: model.slug,
+              image: model.image,
+              price: variant.price,
+              exShowroomPrice: variant.exShowroomPrice,
+              engine: variant.engine,
+              torque: variant.torque,
+              power: variant.power,
+              mileage: variant.mileage,
+              torqueNumeric: variant.torqueNumeric,
+              powerNumeric: variant.powerNumeric,
+              mileageNumeric: variant.mileageNumeric,
+              overallScore: variant.overallScore || 0,
+              scores: variant.scores || null,
+              factorScores: variant.factorScores || null,
+              specifications: variant.specifications || {},
             })
           })
-          setCarsData(flattened)
-          const uniqueBrands = [...new Set(flattened.map(c => c.brand))]
-          setBrandsData(uniqueBrands)
-        } else {
-          setDataError(response.message || 'Failed to load car data')
-        }
+        })
+      })
+      setCarsData(flattened)
+      const uniqueBrands = [...new Set(flattened.map(c => c.brand))]
+      setBrandsData(uniqueBrands)
+    }
+
+    const fetchCarData = async () => {
+      try {
+        setDataError(null)
+
+        // getAllCarsInstant resolves immediately (no network wait) when
+        // data is already cached from the app-level prefetch or a prior
+        // visit — that's the normal case, and it's what makes this page
+        // open without a visible loading state. If the cache was stale,
+        // it still returns the cached copy right away and refreshes
+        // silently in the background via the onFresh callback below.
+        const response = await api.getAllCarsInstant((fresh) => {
+          if (!cancelled) applyResponse(fresh)
+        })
+        if (!cancelled) applyResponse(response)
       } catch (error) {
         console.error('❌ Error fetching car data:', error)
-        setDataError('Network error. Please try again.')
+        if (!cancelled) setDataError('Network error. Please try again.')
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
     fetchCarData()
+
+    return () => { cancelled = true }
   }, [])
 
   // ✅ Dynamically Calculate the Highest Rated Variants for Popular Comparisons
