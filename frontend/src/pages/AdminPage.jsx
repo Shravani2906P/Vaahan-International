@@ -41,15 +41,17 @@ const AdminPage = () => {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    showLoanCTA: false,
+    showInsuranceCTA: false,
   })
 
   const [showSeo, setShowSeo] = useState(false)
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
+    const { name, value, type, checked } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }))
   }
 
@@ -162,6 +164,8 @@ const AdminPage = () => {
       seoTitle: item.seoTitle || '',
       seoDescription: item.seoDescription || '',
       seoKeywords: Array.isArray(item.seoKeywords) ? item.seoKeywords.join(', ') : (item.seoKeywords || ''),
+      showLoanCTA: item.showLoanCTA || false,
+      showInsuranceCTA: item.showInsuranceCTA || false,
     })
     setActiveTab('write')
     setMessage({ type: '', text: '' })
@@ -187,6 +191,8 @@ const AdminPage = () => {
       seoTitle: '',
       seoDescription: '',
       seoKeywords: '',
+      showLoanCTA: false,
+      showInsuranceCTA: false,
     })
     setMessage({ type: '', text: '' })
   }
@@ -810,6 +816,47 @@ const AdminPage = () => {
                 </div>
               )}
             </div>
+
+            {/* CTA Buttons Display Toggles (Articles Only) */}
+            {contentType === 'article' && (
+              <div className="bg-slate-850/40 border border-slate-700/60 rounded-2xl p-6 space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-yellow-500">
+                  Article Call-To-Action (CTA) Settings
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Enable these checkboxes to render direct CTA conversion buttons at the bottom of this article page.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <label className="flex items-center gap-3 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-900/60 transition-all select-none">
+                    <input
+                      type="checkbox"
+                      name="showLoanCTA"
+                      checked={formData.showLoanCTA}
+                      onChange={handleInputChange}
+                      className="w-4.5 h-4.5 accent-yellow-500 rounded cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-semibold text-slate-200 block">Show Auto Loan CTA</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Redirects readers to the Auto Loan Lead Form</span>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-3 bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 cursor-pointer hover:bg-slate-900/60 transition-all select-none">
+                    <input
+                      type="checkbox"
+                      name="showInsuranceCTA"
+                      checked={formData.showInsuranceCTA}
+                      onChange={handleInputChange}
+                      className="w-4.5 h-4.5 accent-yellow-500 rounded cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-semibold text-slate-200 block">Show Insurance CTA</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Redirects readers to the Insurance Lead Form</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* Submit Button */}
             <div className="pt-4 flex items-center justify-between gap-4">

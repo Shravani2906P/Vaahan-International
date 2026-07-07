@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { getArticleBySlug, getAllArticles } from '../data/articlesData'
+import { Landmark, ShieldAlert } from 'lucide-react'
 
 const ArticleDetail = () => {
   const { slug } = useParams()
@@ -132,6 +133,44 @@ const ArticleDetail = () => {
             <div className={`prose prose-sm sm:prose-base lg:prose-lg max-w-none ${isDark ? 'prose-invert' : ''}`}>
               <div dangerouslySetInnerHTML={{ __html: article.content }} />
             </div>
+
+            {/* Inline Article CTA Buttons (Loan / Insurance) */}
+            {(article.showLoanCTA || article.showInsuranceCTA) && (
+              <div className={`mt-8 p-6 rounded-2xl border transition-all duration-300 ${
+                isDark ? 'bg-dark-950/80 border-dark-800 shadow-inner' : 'bg-slate-50 border-slate-200 shadow-sm'
+              }`}>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h4 className={`text-sm font-extrabold uppercase tracking-wider ${isDark ? 'text-yellow-500' : 'text-yellow-600'}`}>
+                      DryvSquad Advisor Recommendations
+                    </h4>
+                    <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
+                      Take the next step based on this article's expert insights.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                    {article.showLoanCTA && (
+                      <Link
+                        to="/lead-loan"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 text-xs font-bold rounded-xl shadow transition-all hover:shadow-yellow-500/10 w-full sm:w-auto text-center justify-center"
+                      >
+                        <Landmark className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                        <span>Get Auto Loan Quotes</span>
+                      </Link>
+                    )}
+                    {article.showInsuranceCTA && (
+                      <Link
+                        to="/lead-insurance"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-200 hover:bg-slate-350 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 transition-all w-full sm:w-auto text-center justify-center"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-slate-800 dark:text-white shrink-0" />
+                        <span>Get Insurance Quotes</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Tags */}
             {article.tags && article.tags.length > 0 && (

@@ -67,6 +67,14 @@ const ArticleSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  showLoanCTA: {
+    type: Boolean,
+    default: false,
+  },
+  showInsuranceCTA: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

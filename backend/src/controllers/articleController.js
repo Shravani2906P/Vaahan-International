@@ -218,6 +218,8 @@ exports.createArticle = async (req, res) => {
       seoTitle,
       seoDescription,
       seoKeywords,
+      showLoanCTA,
+      showInsuranceCTA,
     } = req.body;
 
     // Validate required fields
@@ -273,6 +275,8 @@ exports.createArticle = async (req, res) => {
       seoTitle: seoTitle || title,
       seoDescription: seoDescription || excerpt,
       seoKeywords: processedKeywords,
+      showLoanCTA: showLoanCTA === true,
+      showInsuranceCTA: showInsuranceCTA === true,
       publishedAt: new Date(),
     });
 
@@ -313,7 +317,9 @@ exports.updateArticle = async (req, res) => {
       status,
       seoTitle,
       seoDescription,
-      seoKeywords
+      seoKeywords,
+      showLoanCTA,
+      showInsuranceCTA,
     } = req.body;
 
     const article = await Article.findById(id);
@@ -358,6 +364,8 @@ exports.updateArticle = async (req, res) => {
       seoTitle: seoTitle || title || article.seoTitle,
       seoDescription: seoDescription || excerpt || article.seoDescription,
       seoKeywords: processedKeywords,
+      showLoanCTA: showLoanCTA !== undefined ? showLoanCTA : article.showLoanCTA,
+      showInsuranceCTA: showInsuranceCTA !== undefined ? showInsuranceCTA : article.showInsuranceCTA,
       updatedAt: new Date()
     };
 
