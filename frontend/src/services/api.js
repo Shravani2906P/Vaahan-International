@@ -785,6 +785,88 @@ export const api = {
   },
 
   // ========================================
+  // LEADS API
+  // ========================================
+
+  // Submit a lead (loan or insurance)
+  submitLead: async (leadData) => {
+    try {
+      const response = await fetch(`${API_URL}/leads`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(leadData),
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Submit lead error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  // Get all leads (Admin only)
+  getAllLeads: async (token = null) => {
+    try {
+      const headers = {
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/leads`, {
+        headers,
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Get leads error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  // ========================================
+  // SETTINGS API
+  // ========================================
+
+  // Get global settings (links, etc.)
+  getSettings: async () => {
+    try {
+      const response = await fetch(`${API_URL}/settings`, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Get settings error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  // Update global settings (Admin only)
+  updateSettings: async (settingsData, token = null) => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_URL}/settings`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(settingsData),
+      });
+      return await handleResponse(response);
+    } catch (error) {
+      console.error('❌ Update settings error:', error);
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  },
+
+  // ========================================
   // Send Contact Form
   // ========================================
   sendContactForm: async (formData) => {

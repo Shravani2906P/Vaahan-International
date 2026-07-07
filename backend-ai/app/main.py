@@ -66,6 +66,8 @@ class AIResponse(BaseModel):
     sources: list[dict]
     has_answer: bool
     is_small_talk: Optional[bool] = False
+    suggest_loan: Optional[bool] = False
+    suggest_insurance: Optional[bool] = False
 
 
 @app.get("/")
@@ -223,7 +225,9 @@ async def ai_mode(request: QueryRequest):
         verdict=result.get("verdict", ""),
         sources=result.get("sources", []),
         has_answer=result.get("has_answer", True),
-        is_small_talk=result.get("is_small_talk", False)
+        is_small_talk=result.get("is_small_talk", False),
+        suggest_loan=result.get("suggest_loan", False),
+        suggest_insurance=result.get("suggest_insurance", False)
     )
 
 

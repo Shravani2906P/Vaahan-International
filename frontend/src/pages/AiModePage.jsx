@@ -10,10 +10,66 @@ import {
   ExternalLink,
   ChevronRight,
   Trash2,
-  Send
+  Send,
+  Landmark,
+  ShieldAlert
 } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_AI_API_URL || 'http://localhost:8000';
+
+const parseTextLinks = (text) => {
+  if (!text) return "";
+  
+  // Match [link text](url)
+  const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    const [fullMatch, linkText, url] = match;
+    const matchIndex = match.index;
+    
+    // Add text before link
+    if (matchIndex > lastIndex) {
+      parts.push(text.substring(lastIndex, matchIndex));
+    }
+    
+    // Check if external or internal
+    const isExternal = url.startsWith('http') || url.startsWith('www');
+    if (isExternal) {
+      parts.push(
+        <a 
+          key={matchIndex}
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-yellow-600 dark:text-yellow-500 hover:underline font-bold inline-flex items-center gap-0.5 mx-1"
+        >
+          {linkText} <ExternalLink className="w-3 h-3 inline-block align-middle" />
+        </a>
+      );
+    } else {
+      parts.push(
+        <Link 
+          key={matchIndex}
+          to={url}
+          className="text-yellow-600 dark:text-yellow-500 hover:underline font-bold inline-flex items-center gap-0.5 mx-1"
+        >
+          {linkText} <ChevronRight className="w-3.5 h-3.5 inline-block align-middle" />
+        </Link>
+      );
+    }
+    
+    lastIndex = regex.lastIndex;
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : text;
+};
 
 const AiModePage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -241,7 +297,7 @@ const AiModePage = () => {
                     return (
                       <div key={index} className="flex justify-start animate-fade-in">
                         <div className="bg-slate-100 dark:bg-[#202124] text-slate-800 dark:text-[#e3e3e3] px-5 py-3.5 rounded-2xl max-w-lg shadow-sm text-sm leading-relaxed border border-slate-200 dark:border-[#2f3032]">
-                          {result.verdict}
+                          {parseTextLinks(result.verdict)}
                         </div>
                       </div>
                     )
@@ -260,7 +316,7 @@ const AiModePage = () => {
                           Direct Verdict
                         </span>
                         <div className="text-base font-bold text-slate-900 dark:text-white leading-relaxed border-l-2 border-yellow-500 pl-4 py-1">
-                          {result.verdict}
+                          {parseTextLinks(result.verdict)}
                         </div>
                       </div>
 
@@ -271,7 +327,7 @@ const AiModePage = () => {
                             Reasoning
                           </span>
                           <p className="text-sm text-slate-700 dark:text-[#e3e3e3] leading-relaxed">
-                            {result.reasoning}
+                            {parseTextLinks(result.reasoning)}
                           </p>
                         </div>
                       )}
@@ -322,6 +378,30 @@ const AiModePage = () => {
                             Search general articles instead
                             <ArrowRight className="w-3.5 h-3.5" />
                           </Link>
+                        </div>
+                      )}
+
+                      {/* Dynamic CTA Buttons for Loan / Insurance */}
+                      {msgRelevant && (result.suggest_loan || result.suggest_insurance) && (
+                        <div className="flex flex-wrap gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/40">
+                          {result.suggest_loan && (
+                            <Link
+                              to="/lead-loan"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-slate-950 text-xs font-bold rounded-xl shadow transition-all hover:shadow-yellow-500/10"
+                            >
+                              <Landmark className="w-3.5 h-3.5 text-slate-950" />
+                              <span>Get Auto Loan Quotes</span>
+                            </Link>
+                          )}
+                          {result.suggest_insurance && (
+                            <Link
+                              to="/lead-insurance"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-white text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 transition-all"
+                            >
+                              <ShieldAlert className="w-3.5 h-3.5 text-slate-800 dark:text-white" />
+                              <span>Get Insurance Quotes</span>
+                            </Link>
+                          )}
                         </div>
                       )}
 

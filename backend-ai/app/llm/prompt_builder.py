@@ -94,7 +94,13 @@ INSTRUCTIONS:
      - "reasoning": A clear step-by-step or descriptive explanation of the procedure (4-5 sentences).
      - "pros" & "cons": Keep as empty arrays [] since pros/cons do not apply to how-to instructions.
 
-2. STABILITY & TRUTH (CRITICAL BOUNDARIES):
+2. RELEVANCE FLAGS:
+   - If the user query relates to car features, specifications, pricing, comparison, budget, or purchasing advice (e.g., asking "which SUV to buy", "compare ADAS", "should I buy Nexon?", etc.):
+     - Set "suggest_loan" to true if the query is about buying, budget, pricing, or comparing cars. Otherwise set to false.
+     - Set "suggest_insurance" to true if the query is about safety, maintenance, features, or ownership/buying. Otherwise set to false.
+     - Do NOT include any loan or insurance links inside the "verdict" or "reasoning" text. Keep the text clean.
+
+3. STABILITY & TRUTH (CRITICAL BOUNDARIES):
    - You must act strictly as a RAG (Retrieval-Augmented) system. Answer ONLY using the provided DRYVSQUAD context. Do NOT make up facts, and do NOT use your general pre-trained knowledge to answer questions that are not present in the provided context.
    - Use the CONVERSATION HISTORY to resolve follow-up context.
    - If the user query is completely irrelevant to automotive topics (e.g., asking about cricketers, actors, movies, general history, geography, science) or if the provided context does not contain the answer:
@@ -112,7 +118,9 @@ Respond STRICTLY in JSON format (do not wrap in markdown or backticks, do not in
   "cons": ["con 1", "con 2"] or [],
   "verdict": "One-line recommendation, definition, or 'I couldn't find relevant information in DryvSquad's knowledge base.'",
   "sources": {sources_json},
-  "has_answer": true or false
+  "has_answer": true or false,
+  "suggest_loan": true or false,
+  "suggest_insurance": true or false
 }}"""
 
     return prompt
