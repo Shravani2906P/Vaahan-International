@@ -281,6 +281,15 @@ def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driv
                 
         scored_cars.append((c, points))
         
+    # De-duplicate by base name to ensure diverse recommendations (e.g. Amaze, Swift, Baleno)
+    unique_scored_cars = []
+    seen_base_names = set()
+    for c, score in scored_cars:
+        base_name = (c['brand'] + " " + get_base_name(c['name'], c['brand'])).lower().strip()
+        if base_name not in seen_base_names:
+            seen_base_names.add(base_name)
+            unique_scored_cars.append((c, score))
+            
     no_exact_match = False
     
     # If no cars matched budget, set fallback using all cars (ignoring budget constraint)
@@ -299,7 +308,7 @@ def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driv
         # Re-run de-duplication over all scored fallback cars
         seen_base_names = set()
         for c, score in scored_cars:
-            base_name = f"{c['brand']} {get_base_name(c['name'])}".lower().strip()
+            base_name = (c['brand'] + " " + get_base_name(c['name'], c['brand'])).lower().strip()
             if base_name not in seen_base_names:
                 seen_base_names.add(base_name)
                 unique_scored_cars.append((c, score))
