@@ -55,6 +55,101 @@ const AiCarFinder = () => {
   const [driver, setDriver] = useState('Experienced')
   const [city, setCity] = useState('Mumbai')
 
+  const classifyCity = (cityName) => {
+    if (!cityName) return 'Tier 1';
+    const c = cityName.toLowerCase().trim();
+    const tier1 = ["mumbai", "delhi", "bangalore", "bengaluru", "hyderabad", "ahmedabad", "chennai", "kolkata", "pune"];
+    const tier2 = ["jaipur", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", "visakhapatnam", "vizag", "patna", "vadodara", "ghaziabad", "ludhiana", "agra", "nashik", "faridabad", "meerut", "rajkot", "varanasi", "srinagar", "aurangabad", "dhanbad", "amritsar", "navi mumbai", "allahabad", "prayagraj", "ranchi", "howrah", "coimbatore", "jabalpur", "gwalior", "vijayawada", "jodhpur", "madurai", "raipur", "kota", "guwahati", "chandigarh", "solapur", "hubli", "dharwad", "bareilly", "moradabad", "mysore", "mysuru", "gurgaon", "gurugram", "aligarh", "jalandhar", "tiruchirappalli", "bhubaneswar", "salem", "warangal", "guntur", "bhilai", "amravati", "noida", "jamshedpur", "bikaner", "kochi", "cuttack", "dehradun", "kolhapur", "ajmer", "jammu", "mangalore", "mangaluru", "udaipur", "shimla", "panaji"];
+    
+    if (tier1.some(ct => c.includes(ct))) return 'Tier 1';
+    if (tier2.some(ct => c.includes(ct))) return 'Tier 2';
+    if (c.includes("rural") || c.includes("village") || c.includes("town")) return 'Rural';
+    return 'Tier 3';
+  };
+
+  const getUsageOptions = (type) => {
+    switch (type) {
+      case 'Tier 1':
+        return [
+          { value: 'City', label: 'Daily City Commute (Heavy traffic)' },
+          { value: 'City-to-City', label: 'City-to-City Travel (Intercity)' },
+          { value: 'Highway', label: 'Highway / Long Distance driving' },
+          { value: 'Weekend', label: 'Weekend Getaways' },
+          { value: 'Family Outings', label: 'Family Outings' }
+        ];
+      case 'Tier 2':
+        return [
+          { value: 'City', label: 'Daily City Commute (Heavy traffic)' },
+          { value: 'Tier 2 & 3 Commute', label: 'Tier 2 & 3 City Commute' },
+          { value: 'City-to-City', label: 'City-to-City Travel (Intercity)' },
+          { value: 'Highway', label: 'Highway / Long Distance driving' },
+          { value: 'Weekend', label: 'Weekend Getaways' },
+          { value: 'Family Outings', label: 'Family Outings' },
+          { value: 'Adventure', label: 'Adventure / Off-Roading' }
+        ];
+      case 'Rural':
+      case 'Tier 3':
+      default:
+        return [
+          { value: 'Tier 2 & 3 Commute', label: 'Tier 2 & 3 City Commute' },
+          { value: 'Rural Commute', label: 'Rural Area Commute' },
+          { value: 'City-to-City', label: 'City-to-City Travel (Intercity)' },
+          { value: 'Highway', label: 'Highway / Long Distance driving' },
+          { value: 'Weekend', label: 'Weekend Getaways' },
+          { value: 'Family Outings', label: 'Family Outings' },
+          { value: 'Adventure', label: 'Adventure / Off-Roading' }
+        ];
+    }
+  };
+
+  const getSecondaryUsageOptions = (type) => {
+    const base = getUsageOptions(type);
+    return [{ value: 'None', label: 'None (No secondary usage)' }, ...base];
+  };
+
+  const getTerrainOptions = (type) => {
+    switch (type) {
+      case 'Tier 1':
+        return [
+          { value: 'Smooth', label: 'Smooth city roads & highways' },
+          { value: 'Rough', label: 'Potholes, speed breakers & broken/rough roads' }
+        ];
+      case 'Tier 2':
+        return [
+          { value: 'Smooth', label: 'Smooth city roads & highways' },
+          { value: 'Rough', label: 'Potholes, speed breakers & broken/rough roads' },
+          { value: 'Hills', label: 'Hilly areas & steep inclines' }
+        ];
+      case 'Rural':
+      case 'Tier 3':
+      default:
+        return [
+          { value: 'Rough', label: 'Potholes, speed breakers & broken/rough roads' },
+          { value: 'Hills', label: 'Hilly areas & steep inclines' }
+        ];
+    }
+  };
+
+  // Synchronize options when city name typed changes
+  useEffect(() => {
+    const type = classifyCity(city);
+    
+    const allowedUsage = getUsageOptions(type);
+    if (!allowedUsage.some(opt => opt.value === usage)) {
+      setUsage(allowedUsage[0].value);
+    }
+    
+    const allowedSecUsage = getSecondaryUsageOptions(type);
+    if (!allowedSecUsage.some(opt => opt.value === secondaryUsage)) {
+      setSecondaryUsage(allowedSecUsage[0].value);
+    }
+    
+    const allowedTerrain = getTerrainOptions(type);
+    if (!allowedTerrain.some(opt => opt.value === terrain)) {
+      setTerrain(allowedTerrain[0].value);
+    }
+  }, [city]);
+
   // --- PREMIUM SELECTABLE PARAMETER STATES ---
   const [secondaryUsage, setSecondaryUsage] = useState('None')
   const [financePlan, setFinancePlan] = useState('Outright Cash Purchase')
@@ -604,14 +699,9 @@ const AiCarFinder = () => {
                     onChange={(e) => setUsage(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
                   >
-                    <option value="City">Daily City Commute (Heavy traffic)</option>
-                    <option value="Tier 2 & 3 Commute">Tier 2 & 3 City Commute</option>
-                    <option value="Rural Commute">Rural Area Commute</option>
-                    <option value="City-to-City">City-to-City Travel (Intercity)</option>
-                    <option value="Highway">Highway / Long Distance driving</option>
-                    <option value="Weekend">Weekend Getaways</option>
-                    <option value="Family Outings">Family Outings</option>
-                    <option value="Adventure">Adventure / Off-Roading</option>
+                    {getUsageOptions(classifyCity(city)).map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -629,9 +719,9 @@ const AiCarFinder = () => {
                     onChange={(e) => setTerrain(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
                   >
-                    <option value="Smooth">Smooth city roads & highways</option>
-                    <option value="Rough">Potholes, speed breakers & broken/rough roads</option>
-                    <option value="Hills">Hilly areas & steep inclines</option>
+                    {getTerrainOptions(classifyCity(city)).map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
@@ -702,12 +792,9 @@ const AiCarFinder = () => {
                     {!premiumUnlocked ? (
                       <option>None / NA</option>
                     ) : (
-                      <>
-                        <option value="None">None / NA</option>
-                        <option value="Weekend trips & getaways">Weekend trips & getaways</option>
-                        <option value="Office commutes">Office commutes</option>
-                        <option value="Daily city runs">Daily city runs</option>
-                      </>
+                      getSecondaryUsageOptions(classifyCity(city)).map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))
                     )}
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
