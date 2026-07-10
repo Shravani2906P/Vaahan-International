@@ -21,7 +21,8 @@ import {
   CheckCircle2,
   DollarSign,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  MapPin
 } from 'lucide-react'
 
 const getBaseModelName = (name, brand) => {
@@ -52,6 +53,7 @@ const AiCarFinder = () => {
   const [usage, setUsage] = useState('City')
   const [terrain, setTerrain] = useState('Smooth')
   const [driver, setDriver] = useState('Experienced')
+  const [city, setCity] = useState('Mumbai')
 
   // --- PREMIUM SELECTABLE PARAMETER STATES ---
   const [secondaryUsage, setSecondaryUsage] = useState('None')
@@ -98,6 +100,7 @@ const AiCarFinder = () => {
         if (state.usage) setUsage(state.usage)
         if (state.terrain) setTerrain(state.terrain)
         if (state.driver) setDriver(state.driver)
+        if (state.city) setCity(state.city)
         if (state.recommendations) setRecommendations(state.recommendations)
         if (state.searched !== undefined) setSearched(state.searched)
         if (state.premiumUnlocked !== undefined) setPremiumUnlocked(state.premiumUnlocked)
@@ -131,6 +134,7 @@ const AiCarFinder = () => {
         usage,
         terrain,
         driver,
+        city,
         recommendations,
         searched,
         premiumUnlocked,
@@ -143,7 +147,7 @@ const AiCarFinder = () => {
     } catch (e) {
       // Ignore incognito quota errors
     }
-  }, [isLoaded, budget, seating, usage, terrain, driver, recommendations, searched, premiumUnlocked, secondaryUsage, financePlan, resalePlan, maintenanceBudget])
+  }, [isLoaded, budget, seating, usage, terrain, driver, city, recommendations, searched, premiumUnlocked, secondaryUsage, financePlan, resalePlan, maintenanceBudget])
 
   const navigateToVariants = (car) => {
     navigate(`/model-variants/${car.slug}`, {
@@ -153,7 +157,7 @@ const AiCarFinder = () => {
         verdict: car.verdict,
         focus: car.focus,
         image: car.image,
-        searchParams: { budget, seating, usage, terrain, driver }
+        searchParams: { budget, seating, usage, terrain, driver, city }
       }
     })
   }
@@ -164,6 +168,7 @@ const AiCarFinder = () => {
     setUsage('City')
     setTerrain('Smooth')
     setDriver('Experienced')
+    setCity('Mumbai')
     setRecommendations([])
     setSearched(false)
     setSecondaryUsage('None')
@@ -210,6 +215,7 @@ const AiCarFinder = () => {
         usage,
         terrain,
         driver,
+        city,
         finalCustomQuery
       )
       
@@ -571,7 +577,22 @@ const AiCarFinder = () => {
                 </div>
               </div>
 
-              {/* 3. Primary Usage */}
+              {/* 3. City Name */}
+              <div className="space-y-2 font-sans">
+                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                  Your City
+                </label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Enter your city (e.g. Mumbai, Jaipur)"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 font-sans"
+                />
+              </div>
+
+              {/* 4. Primary Usage */}
               <div className="space-y-2 font-sans">
                 <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                   <Compass className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
@@ -584,15 +605,19 @@ const AiCarFinder = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
                   >
                     <option value="City">Daily City Commute (Heavy traffic)</option>
+                    <option value="Tier 2 & 3 Commute">Tier 2 & 3 City Commute</option>
+                    <option value="Rural Commute">Rural Area Commute</option>
+                    <option value="City-to-City">City-to-City Travel (Intercity)</option>
                     <option value="Highway">Highway / Long Distance driving</option>
-                    <option value="Weekend">Weekend Getaways / Family outings</option>
-                    <option value="Adventure">Rough roads & Adventure tours</option>
+                    <option value="Weekend">Weekend Getaways</option>
+                    <option value="Family Outings">Family Outings</option>
+                    <option value="Adventure">Adventure / Off-Roading</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
-              {/* 4. Road & Terrain Conditions */}
+              {/* 5. Road & Terrain Conditions */}
               <div className="space-y-2 font-sans">
                 <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                   <Compass className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
@@ -605,14 +630,14 @@ const AiCarFinder = () => {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
                   >
                     <option value="Smooth">Smooth city roads & highways</option>
-                    <option value="Rough">Potholes, speed breakers & broken roads</option>
+                    <option value="Rough">Potholes, speed breakers & broken/rough roads</option>
                     <option value="Hills">Hilly areas & steep inclines</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
-              {/* 5. Who is the Primary Driver? */}
+              {/* 6. Who is the Primary Driver? */}
               <div className="space-y-2 font-sans">
                 <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                   <Users className="w-3.5 h-3.5 text-yellow-500 shrink-0" />

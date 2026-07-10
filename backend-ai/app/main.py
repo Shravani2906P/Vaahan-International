@@ -80,6 +80,7 @@ class CarFinderRequest(BaseModel):
     usage: str
     terrain: str
     driver: str
+    city_type: str
     custom_query: Optional[str] = ""
 
 
@@ -101,12 +102,13 @@ async def ai_car_finder(request: CarFinderRequest):
     usage = request.usage.strip()
     terrain = request.terrain.strip()
     driver = request.driver.strip()
+    city_type = request.city_type.strip()
     custom_query = request.custom_query.strip() if request.custom_query else ""
     
-    if not budget or not seating or not usage or not terrain or not driver:
+    if not budget or not seating or not usage or not terrain or not driver or not city_type:
         raise HTTPException(status_code=400, detail="Missing required search parameters.")
         
-    result = find_matching_cars(budget, seating, usage, terrain, driver, custom_query)
+    result = find_matching_cars(budget, seating, usage, terrain, driver, city_type, custom_query)
     return result
 
 

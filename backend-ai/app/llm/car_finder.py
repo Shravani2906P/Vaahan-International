@@ -81,8 +81,48 @@ def parse_budget_range(budget_str: str) -> tuple:
     else:
         return 2000000, 9990000000
 
-def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driver: str, custom_query: str = "") -> dict:
+def get_base_name(model_name: str) -> str:
+    name = model_name
+    for kw in ["1.0", "1.2", "1.5", "2.0", "3.0", "K-Series", "Kappa", "PureTech", "Z12E", "V ", "VX", "LXI", "VXI", "ZXI", "Ldi", "Vdi", "Zdi"]:
+        if kw in name:
+            name = name.split(kw)[0].strip()
+    return name.strip()
+
+def classify_city(city_name: str) -> str:
+    c = city_name.lower().strip()
+    
+    tier_1 = [
+        "mumbai", "delhi", "bangalore", "bengaluru", "hyderabad", 
+        "ahmedabad", "chennai", "kolkata", "pune"
+    ]
+    
+    tier_2 = [
+        "jaipur", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", 
+        "visakhapatnam", "vizag", "patna", "vadodara", "ghaziabad", "ludhiana", 
+        "agra", "nashik", "faridabad", "meerut", "rajkot", "varanasi", "srinagar", 
+        "aurangabad", "dhanbad", "amritsar", "navi mumbai", "allahabad", "prayagraj", 
+        "ranchi", "howrah", "coimbatore", "jabalpur", "gwalior", "vijayawada", 
+        "jodhpur", "madurai", "raipur", "kota", "guwahati", "chandigarh", "solapur", 
+        "hubli", "dharwad", "bareilly", "moradabad", "mysore", "mysuru", "gurgaon", 
+        "gurugram", "aligarh", "jalandhar", "tiruchirappalli", "bhubaneswar", 
+        "salem", "warangal", "guntur", "bhilai", "amravati", "noida", "jamshedpur", 
+        "bikaner", "kochi", "cuttack", "dehradun", "kolhapur", "ajmer", "jammu", 
+        "mangalore", "mangaluru", "udaipur", "shimla", "panaji"
+    ]
+    
+    if any(city in c for city in tier_1):
+        return "tier 1"
+    elif any(city in c for city in tier_2):
+        return "tier 2"
+    elif "rural" in c or "village" in c or "town" in c:
+        return "rural"
+    else:
+        return "tier 3"
+
+def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driver: str, city_type: str, custom_query: str = "") -> dict:
     import traceback
+    
+    city_class = classify_city(city_type)
     
     print(f"\n==================================================")
     print(f"[AI CAR MATCHMAKER] New Search Request Received")
@@ -91,6 +131,7 @@ def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driv
     print(f"   Usage: {usage}")
     print(f"   Terrain: {terrain}")
     print(f"   Driver: {driver}")
+    print(f"   Raw City Input: {city_type} (Classified: {city_class})")
     print(f"   Custom Query: {custom_query}")
     print(f"==================================================")
     
@@ -189,10 +230,44 @@ def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driv
             if any("manual" in t or "dct" in t for t in variant_transmissions):
                 points += 15
                 
+        # 5. City Type Scoring
+        city_sel = city_class
+        if "tier 1" in city_sel:
+            if any("auto" in t or "amt" in t or "dct" in t or "cvt" in t for t in variant_transmissions):
+                points += 25
+            if any("electric" in f for f in variant_fuels):
+                points += 20
+            if any(r <= 5.2 and r > 0 for r in variant_radius):
+                points += 20
+        elif "tier 2" in city_sel:
+            if any("diesel" in f or "hybrid" in f or "petrol" in f for f in variant_fuels):
+                points += 15
+            if any(gc >= 175 for gc in variant_clearances):
+                points += 15
+        elif "rural" in city_sel or "tier 3" in city_sel:
+            if any(gc >= 180 for gc in variant_clearances):
+                points += 25
+            if any("suv" in cat for cat in variant_categories):
+                points += 15
+            if c["brand"].lower() in ["maruti suzuki", "hyundai", "tata"]:
+                points += 30
+            if any("electric" in f for f in variant_fuels):
+                points -= 20  # Penalize EVs in rural areas due to lack of chargers
+                
         scored_cars.append((c, points))
         
     scored_cars.sort(key=lambda x: x[1], reverse=True)
-    filtered_cars = [item[0] for item in scored_cars[:10]]
+    
+    # De-duplicate by base name to ensure diverse recommendations (e.g. Amaze, Swift, Baleno)
+    unique_scored_cars = []
+    seen_base_names = set()
+    for c, score in scored_cars:
+        base_name = f"{c['brand']} {get_base_name(c['name'])}".lower().strip()
+        if base_name not in seen_base_names:
+            seen_base_names.add(base_name)
+            unique_scored_cars.append((c, score))
+            
+    filtered_cars = [item[0] for item in unique_scored_cars[:10]]
     
     if not filtered_cars:
         print("[FILTER] No cars matched budget. Using default fallback slice.")

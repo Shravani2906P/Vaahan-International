@@ -1072,7 +1072,7 @@ export const api = {
   // ========================================
   // AI CAR FINDER API
   // ========================================
-  getAiCarFinderRecommendations: async (budget, seating, usage, terrain, driver, customQuery = '') => {
+  getAiCarFinderRecommendations: async (budget, seating, usage, terrain, driver, cityType, customQuery = '') => {
     try {
       const aiUrl = (import.meta.env.VITE_AI_API_URL || 'http://127.0.0.1:8002').trim();
       console.log('🌐 [VITE API] Attempting to fetch AI matches from:', `${aiUrl}/api/ai-car-finder`);
@@ -1088,6 +1088,7 @@ export const api = {
           usage,
           terrain,
           driver,
+          city_type: cityType,
           custom_query: customQuery
         }),
       });
