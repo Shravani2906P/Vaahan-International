@@ -267,11 +267,11 @@ def find_matching_cars(budget: str, seating: str, usage: str, terrain: str, driv
             seen_base_names.add(base_name)
             unique_scored_cars.append((c, score))
             
-    filtered_cars = [item[0] for item in unique_scored_cars[:10]]
+    filtered_cars = [item[0] for item in unique_scored_cars[:20]]
     
     if not filtered_cars:
         print("[FILTER] No cars matched budget. Using default fallback slice.")
-        filtered_cars = cars[:5]
+        filtered_cars = cars[:10]
         
     print(f"[FILTER] Scored and selected {len(filtered_cars)} cars for prompt context:")
     for c in filtered_cars:
@@ -295,7 +295,7 @@ A buyer is looking for a car based on these lifestyle preferences:
 Here is the list of available cars in our database:
 {cars_list_summary}
 
-Select all relevant cars that match the user's budget and criteria (up to 5 cars max). For each selected car, write the details in this exact format:
+Select all relevant cars that match the user's budget and criteria (up to 10 cars max). For each selected car, write the details in this exact format:
 
 [RECOMMENDATION]
 ID: [exact_model_id_from_the_list_above]
