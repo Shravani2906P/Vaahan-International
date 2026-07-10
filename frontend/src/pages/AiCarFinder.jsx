@@ -260,6 +260,11 @@ const AiCarFinder = () => {
     })
   }
 
+  const handleLockClick = () => {
+    alert("Login to access")
+    navigate('/profile')
+  }
+
   const handleReset = () => {
     setBudget('10-15L')
     setSeating('5 Seats')
@@ -812,7 +817,7 @@ const AiCarFinder = () => {
                   <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   {!premiumUnlocked && (
                     <div 
-                      onClick={() => setShowPremiumModal(true)} 
+                      onClick={handleLockClick} 
                       className="absolute inset-0 z-10 cursor-pointer" 
                     />
                   )}
@@ -846,7 +851,7 @@ const AiCarFinder = () => {
                   <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   {!premiumUnlocked && (
                     <div 
-                      onClick={() => setShowPremiumModal(true)} 
+                      onClick={handleLockClick} 
                       className="absolute inset-0 z-10 cursor-pointer" 
                     />
                   )}
@@ -880,7 +885,7 @@ const AiCarFinder = () => {
                   <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   {!premiumUnlocked && (
                     <div 
-                      onClick={() => setShowPremiumModal(true)} 
+                      onClick={handleLockClick} 
                       className="absolute inset-0 z-10 cursor-pointer" 
                     />
                   )}
@@ -914,7 +919,7 @@ const AiCarFinder = () => {
                   <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   {!premiumUnlocked && (
                     <div 
-                      onClick={() => setShowPremiumModal(true)} 
+                      onClick={handleLockClick} 
                       className="absolute inset-0 z-10 cursor-pointer" 
                     />
                   )}
@@ -1103,7 +1108,7 @@ const AiCarFinder = () => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => navigate('/profile')}
+                      onClick={handleLockClick}
                       className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-xs sm:text-sm transition-all hover:scale-[1.02] shrink-0 flex items-center gap-2 cursor-pointer"
                     >
                       <Lock className="w-4 h-4 text-yellow-500" />
