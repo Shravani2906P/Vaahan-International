@@ -77,7 +77,6 @@ def generate_with_gemini(prompt: str, max_tokens: int = 800, temperature: float 
                 contents=prompt,
                 config=genai.types.GenerateContentConfig(
                     temperature=temperature,
-                    max_output_tokens=max_tokens,
                 )
             )
             result = response.text

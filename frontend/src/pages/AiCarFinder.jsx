@@ -10,6 +10,7 @@ import {
   ChevronDown, 
   Loader2, 
   ChevronRight,
+  ChevronLeft,
   Car, 
   Users, 
   Compass, 
@@ -47,118 +48,19 @@ const AiCarFinder = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
 
-  // --- FREE FORM STATES ---
-  const [budget, setBudget] = useState('10-15L')
-  const [seating, setSeating] = useState('5 Seats')
-  const [usage, setUsage] = useState('City')
-  const [terrain, setTerrain] = useState('Smooth')
-  const [driver, setDriver] = useState('Experienced')
+  // --- WIZARD STATES ---
+  const [currentStep, setCurrentStep] = useState(1)
+  const [budgetSlider, setBudgetSlider] = useState(12)
+  const [emiComfort, setEmiComfort] = useState('₹8K-₹12K')
+  const [monthlyMaintSpend, setMonthlyMaintSpend] = useState('₹3K-₹6K')
   const [city, setCity] = useState('Mumbai')
-
-  const classifyCity = (cityName) => {
-    if (!cityName) return 'Tier 1';
-    const c = cityName.toLowerCase().trim();
-    const tier1 = ["mumbai", "delhi", "bangalore", "bengaluru", "hyderabad", "ahmedabad", "chennai", "kolkata", "pune"];
-    const tier2 = ["jaipur", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", "visakhapatnam", "vizag", "patna", "vadodara", "ghaziabad", "ludhiana", "agra", "nashik", "faridabad", "meerut", "rajkot", "varanasi", "srinagar", "aurangabad", "dhanbad", "amritsar", "navi mumbai", "allahabad", "prayagraj", "ranchi", "howrah", "coimbatore", "jabalpur", "gwalior", "vijayawada", "jodhpur", "madurai", "raipur", "kota", "guwahati", "chandigarh", "solapur", "hubli", "dharwad", "bareilly", "moradabad", "mysore", "mysuru", "gurgaon", "gurugram", "aligarh", "jalandhar", "tiruchirappalli", "bhubaneswar", "salem", "warangal", "guntur", "bhilai", "amravati", "noida", "jamshedpur", "bikaner", "kochi", "cuttack", "dehradun", "kolhapur", "ajmer", "jammu", "mangalore", "mangaluru", "udaipur", "shimla", "panaji"];
-    
-    if (tier1.some(ct => c.includes(ct))) return 'Tier 1';
-    if (tier2.some(ct => c.includes(ct))) return 'Tier 2';
-    if (c.includes("rural") || c.includes("village") || c.includes("town")) return 'Rural';
-    return 'Tier 3';
-  };
-
-  const getUsageOptions = (type) => {
-    switch (type) {
-      case 'Tier 1':
-        return [
-          { value: 'City', label: 'Daily City Commute (Heavy traffic)' },
-          { value: 'City-to-City', label: 'City-to-City Travel (Intercity)' },
-          { value: 'Highway', label: 'Highway / Long Distance driving' },
-          { value: 'Weekend', label: 'Weekend Getaways' },
-          { value: 'Family Outings', label: 'Family Outings' }
-        ];
-      case 'Tier 2':
-        return [
-          { value: 'City', label: 'Daily City Commute (Heavy traffic)' },
-          { value: 'Tier 2 & 3 Commute', label: 'Tier 2 & 3 City Commute' },
-          { value: 'City-to-City', label: 'City-to-City Travel (Intercity)' },
-          { value: 'Highway', label: 'Highway / Long Distance driving' },
-          { value: 'Weekend', label: 'Weekend Getaways' },
-          { value: 'Family Outings', label: 'Family Outings' },
-          { value: 'Adventure', label: 'Adventure / Off-Roading' }
-        ];
-      case 'Rural':
-      case 'Tier 3':
-      default:
-        return [
-          { value: 'Tier 2 & 3 Commute', label: 'Tier 2 & 3 City Commute' },
-          { value: 'Rural Commute', label: 'Rural Area Commute' },
-          { value: 'City-to-City', label: 'City-to-City Travel (Intercity)' },
-          { value: 'Highway', label: 'Highway / Long Distance driving' },
-          { value: 'Weekend', label: 'Weekend Getaways' },
-          { value: 'Family Outings', label: 'Family Outings' },
-          { value: 'Adventure', label: 'Adventure / Off-Roading' }
-        ];
-    }
-  };
-
-  const getSecondaryUsageOptions = (type) => {
-    const base = getUsageOptions(type);
-    return [{ value: 'None', label: 'None (No secondary usage)' }, ...base];
-  };
-
-  const getTerrainOptions = (type) => {
-    switch (type) {
-      case 'Tier 1':
-        return [
-          { value: 'Smooth', label: 'Smooth city roads & highways' },
-          { value: 'Rough', label: 'Potholes, speed breakers & broken/rough roads' }
-        ];
-      case 'Tier 2':
-        return [
-          { value: 'Smooth', label: 'Smooth city roads & highways' },
-          { value: 'Rough', label: 'Potholes, speed breakers & broken/rough roads' },
-          { value: 'Hills', label: 'Hilly areas & steep inclines' }
-        ];
-      case 'Rural':
-      case 'Tier 3':
-      default:
-        return [
-          { value: 'Rough', label: 'Potholes, speed breakers & broken/rough roads' },
-          { value: 'Hills', label: 'Hilly areas & steep inclines' }
-        ];
-    }
-  };
-
-  // Synchronize options when city name typed changes
-  useEffect(() => {
-    const type = classifyCity(city);
-    
-    const allowedUsage = getUsageOptions(type);
-    if (!allowedUsage.some(opt => opt.value === usage)) {
-      setUsage(allowedUsage[0].value);
-    }
-    
-    const allowedSecUsage = getSecondaryUsageOptions(type);
-    if (!allowedSecUsage.some(opt => opt.value === secondaryUsage)) {
-      setSecondaryUsage(allowedSecUsage[0].value);
-    }
-    
-    const allowedTerrain = getTerrainOptions(type);
-    if (!allowedTerrain.some(opt => opt.value === terrain)) {
-      setTerrain(allowedTerrain[0].value);
-    }
-  }, [city]);
-
-  // --- PREMIUM SELECTABLE PARAMETER STATES ---
-  const [secondaryUsage, setSecondaryUsage] = useState('None')
-  const [financePlan, setFinancePlan] = useState('Outright Cash Purchase')
-  const [resalePlan, setResalePlan] = useState('Keep for 3-5 years (Prioritize resale)')
-  const [maintenanceBudget, setMaintenanceBudget] = useState('Strict Low-Maintenance')
-
-  // --- PREMIUM LOCK MODAL STATE ---
-  const [showPremiumModal, setShowPremiumModal] = useState(false)
-  const [premiumUnlocked, setPremiumUnlocked] = useState(false)
+  const [lifeProfile, setLifeProfile] = useState('solo_commuter')
+  const [dailyReality, setDailyReality] = useState(['Daily office commute (city)'])
+  const [nonNegotiables, setNonNegotiables] = useState([])
+  const [keepDuration, setKeepDuration] = useState('4-6 years')
+  const [fuelPref, setFuelPref] = useState('No preference')
+  const [resaleImportance, setResaleImportance] = useState('Prefer good resale')
+  const [relaxedNonNegotiables, setRelaxedNonNegotiables] = useState(false)
 
   // --- PDF CHECKOUT FORM STATES ---
   const [checkoutData, setCheckoutData] = useState({
@@ -174,6 +76,8 @@ const AiCarFinder = () => {
   })
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [pdfSuccess, setPdfSuccess] = useState(false)
+  const [showPremiumModal, setShowPremiumModal] = useState(false)
+  const [premiumUnlocked, setPremiumUnlocked] = useState(false)
 
   // --- RESULTS STATES ---
   const [loading, setLoading] = useState(false)
@@ -191,20 +95,21 @@ const AiCarFinder = () => {
       const cached = sessionStorage.getItem('dryvsquad_car_finder_state')
       if (cached) {
         const state = JSON.parse(cached)
-        if (state.budget) setBudget(state.budget)
-        if (state.seating) setSeating(state.seating)
-        if (state.usage) setUsage(state.usage)
-        if (state.terrain) setTerrain(state.terrain)
-        if (state.driver) setDriver(state.driver)
+        if (state.currentStep) setCurrentStep(state.currentStep)
+        if (state.budgetSlider) setBudgetSlider(state.budgetSlider)
+        if (state.emiComfort) setEmiComfort(state.emiComfort)
+        if (state.monthlyMaintSpend) setMonthlyMaintSpend(state.monthlyMaintSpend)
         if (state.city) setCity(state.city)
+        if (state.lifeProfile) setLifeProfile(state.lifeProfile)
+        if (state.dailyReality) setDailyReality(state.dailyReality)
+        if (state.nonNegotiables) setNonNegotiables(state.nonNegotiables)
+        if (state.keepDuration) setKeepDuration(state.keepDuration)
+        if (state.fuelPref) setFuelPref(state.fuelPref)
+        if (state.resaleImportance) setResaleImportance(state.resaleImportance)
         if (state.recommendations) setRecommendations(state.recommendations)
         if (state.noExactMatch !== undefined) setNoExactMatch(state.noExactMatch)
+        if (state.relaxedNonNegotiables !== undefined) setRelaxedNonNegotiables(state.relaxedNonNegotiables)
         if (state.searched !== undefined) setSearched(state.searched)
-        if (state.premiumUnlocked !== undefined) setPremiumUnlocked(state.premiumUnlocked)
-        if (state.secondaryUsage) setSecondaryUsage(state.secondaryUsage)
-        if (state.financePlan) setFinancePlan(state.financePlan)
-        if (state.resalePlan) setResalePlan(state.resalePlan)
-        if (state.maintenanceBudget) setMaintenanceBudget(state.maintenanceBudget)
       }
     } catch (e) {
       console.error('Failed to load cached finder state:', e)
@@ -223,31 +128,44 @@ const AiCarFinder = () => {
   // Auto-save finder state to sessionStorage on any state change (only after load)
   useEffect(() => {
     if (!isLoaded) return
-
     try {
       const state = {
-        budget,
-        seating,
-        usage,
-        terrain,
-        driver,
+        currentStep,
+        budgetSlider,
+        emiComfort,
+        monthlyMaintSpend,
         city,
+        lifeProfile,
+        dailyReality,
+        nonNegotiables,
+        keepDuration,
+        fuelPref,
+        resaleImportance,
         recommendations,
         noExactMatch,
-        searched,
-        premiumUnlocked,
-        secondaryUsage,
-        financePlan,
-        resalePlan,
-        maintenanceBudget
+        relaxedNonNegotiables,
+        searched
       }
       sessionStorage.setItem('dryvsquad_car_finder_state', JSON.stringify(state))
     } catch (e) {
       // Ignore incognito quota errors
     }
-  }, [isLoaded, budget, seating, usage, terrain, driver, city, recommendations, noExactMatch, searched, premiumUnlocked, secondaryUsage, financePlan, resalePlan, maintenanceBudget])
+  }, [isLoaded, currentStep, budgetSlider, emiComfort, monthlyMaintSpend, city, lifeProfile, dailyReality, nonNegotiables, keepDuration, fuelPref, resaleImportance, recommendations, noExactMatch, relaxedNonNegotiables, searched])
+
+  const classifyCity = (cityName) => {
+    if (!cityName) return 'Tier 1';
+    const c = cityName.toLowerCase().trim();
+    const tier1 = ["mumbai", "delhi", "bangalore", "bengaluru", "hyderabad", "ahmedabad", "chennai", "kolkata", "pune"];
+    const tier2 = ["jaipur", "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", "visakhapatnam", "vizag", "patna", "vadodara", "ghaziabad", "ludhiana", "agra", "nashik", "faridabad", "meerut", "rajkot", "varanasi", "srinagar", "aurangabad", "dhanbad", "amritsar", "navi mumbai", "allahabad", "prayagraj", "ranchi", "howrah", "coimbatore", "jabalpur", "gwalior", "vijayawada", "jodhpur", "madurai", "raipur", "kota", "guwahati", "chandigarh", "solapur", "hubli", "dharwad", "bareilly", "moradabad", "mysore", "mysuru", "gurgaon", "gurugram", "aligarh", "jalandhar", "tiruchirappalli", "bhubaneswar", "salem", "warangal", "guntur", "bhilai", "amravati", "noida", "jamshedpur", "bikaner", "kochi", "cuttack", "dehradun", "kolhapur", "ajmer", "jammu", "mangalore", "mangaluru", "udaipur", "shimla", "panaji"];
+    
+    if (tier1.some(ct => c.includes(ct))) return 'Tier 1';
+    if (tier2.some(ct => c.includes(ct))) return 'Tier 2';
+    if (c.includes("rural") || c.includes("village") || c.includes("town")) return 'Rural';
+    return 'Tier 3';
+  };
 
   const navigateToVariants = (car) => {
+    const mappedBudget = budgetSlider >= 80 ? "80L+" : `${budgetSlider}L`
     navigate(`/model-variants/${car.slug}`, {
       state: {
         modelName: car.displayName || (car.brand + " " + getBaseModelName(car.name, car.brand)),
@@ -255,30 +173,39 @@ const AiCarFinder = () => {
         verdict: car.verdict,
         focus: car.focus,
         image: car.image,
-        searchParams: { budget, seating, usage, terrain, driver, city }
+        searchParams: { 
+          budget: mappedBudget, 
+          seating: lifeProfile === 'joint_family' ? '7 Seats' : '5 Seats', 
+          usage: dailyReality.join(' + '), 
+          terrain: (nonNegotiables.includes('High ground clearance') || dailyReality.includes('Off-road / adventure')) ? 'Rough' : 'Smooth', 
+          driver: lifeProfile === 'new_driver' ? 'Beginner' : lifeProfile === 'senior_citizen' ? 'Senior' : 'Experienced', 
+          city 
+        }
       }
     })
   }
 
   const handleLockClick = () => {
     alert("Login to access")
-    navigate('/profile')
+    navigate('/ai-car-finder')
   }
 
   const handleReset = () => {
-    setBudget('10-15L')
-    setSeating('5 Seats')
-    setUsage('City')
-    setTerrain('Smooth')
-    setDriver('Experienced')
+    setCurrentStep(1)
+    setBudgetSlider(12)
+    setEmiComfort('₹8K-₹12K')
+    setMonthlyMaintSpend('₹3K-₹6K')
     setCity('Mumbai')
+    setLifeProfile('solo_commuter')
+    setDailyReality(['Daily office commute (city)'])
+    setNonNegotiables([])
+    setKeepDuration('4-6 years')
+    setFuelPref('No preference')
+    setResaleImportance('Prefer good resale')
     setRecommendations([])
     setNoExactMatch(false)
+    setRelaxedNonNegotiables(false)
     setSearched(false)
-    setSecondaryUsage('None')
-    setFinancePlan('Outright Cash Purchase')
-    setResalePlan('Keep for 3-5 years (Prioritize resale)')
-    setMaintenanceBudget('Strict Low-Maintenance')
     setError('')
     try {
       sessionStorage.removeItem('dryvsquad_car_finder_state')
@@ -292,33 +219,46 @@ const AiCarFinder = () => {
     setError('')
     setSearched(true)
     
+    setTimeout(() => {
+      window.scrollTo({
+        top: window.innerHeight * 0.8,
+        behavior: 'smooth'
+      });
+    }, 100);
+
     try {
-      let finalCustomQuery = ''
-      if (premiumUnlocked) {
-        const premiumParts = []
-        if (secondaryUsage && secondaryUsage !== 'None') {
-          premiumParts.push(`Secondary Usage: ${secondaryUsage}`)
-        }
-        if (financePlan) {
-          premiumParts.push(`Financing Plan Preference: ${financePlan}`)
-        }
-        if (resalePlan) {
-          premiumParts.push(`Resale / Upgrade Plan: ${resalePlan}`)
-        }
-        if (maintenanceBudget) {
-          premiumParts.push(`Maintenance Priority: ${maintenanceBudget}`)
-        }
-        if (premiumParts.length > 0) {
-          finalCustomQuery = `[Premium Configuration - ${premiumParts.join(', ')}]`
-        }
+      const mappedBudget = budgetSlider >= 80 ? "80L+" : `up to ${budgetSlider}L`
+      const mappedSeating = lifeProfile === 'joint_family' ? '7 Seats' : '5 Seats'
+      const mappedDriver = lifeProfile === 'new_driver' ? 'Beginner' : lifeProfile === 'senior_citizen' ? 'Senior' : 'Experienced'
+      let mappedUsage = dailyReality.join(' + ')
+      if (!mappedUsage) {
+        if (lifeProfile === 'solo_commuter') mappedUsage = 'Daily office commute (city)'
+        else if (lifeProfile === 'young_couple') mappedUsage = 'Weekend family outings'
+        else if (lifeProfile === 'small_family') mappedUsage = 'School runs + errands'
+        else if (lifeProfile === 'joint_family') mappedUsage = 'Weekend family outings'
+        else if (lifeProfile === 'adventure') mappedUsage = 'Off-road / adventure'
+        else if (lifeProfile === 'senior_citizen') mappedUsage = 'Occasional use / second car'
+        else if (lifeProfile === 'new_driver') mappedUsage = 'Occasional use / second car'
+        else if (lifeProfile === 'commercial') mappedUsage = 'Commercial / cab / high daily kms'
+        else mappedUsage = 'Daily office commute (city)'
       }
 
+      const mappedTerrain = (nonNegotiables.includes('High ground clearance') || dailyReality.includes('Off-road / adventure')) ? 'Rough' : 'Smooth'
+      const mappedNonNegs = nonNegotiables.map(x => {
+        if (x === '6+ airbags (safety first)') return '6+ airbags'
+        if (x === 'Automatic transmission only') return 'Automatic only'
+        if (x === 'EV / electric') return 'EV'
+        if (x === '4WD / AWD') return '4WD/AWD'
+        return x
+      });
+      const finalCustomQuery = `EMI: ${emiComfort} | Maintenance: ${monthlyMaintSpend} | Tenure: ${keepDuration} | FuelPref: ${fuelPref} | Resale: ${resaleImportance} | NonNegotiables: ${mappedNonNegs.join(',')}`
+
       const result = await api.getAiCarFinderRecommendations(
-        budget,
-        seating,
-        usage,
-        terrain,
-        driver,
+        mappedBudget,
+        mappedSeating,
+        mappedUsage,
+        mappedTerrain,
+        mappedDriver,
         city,
         finalCustomQuery
       )
@@ -326,8 +266,8 @@ const AiCarFinder = () => {
       if (result && result.success) {
         const rawRecs = result.recommendations || []
         setNoExactMatch(!!result.noExactMatch)
+        setRelaxedNonNegotiables(!!result.relaxedNonNegotiables)
         
-        // De-duplicate recommendations by their base model name
         const seenModels = new Set()
         const uniqueRecs = []
         for (const car of rawRecs) {
@@ -339,7 +279,6 @@ const AiCarFinder = () => {
         }
         
         setRecommendations(uniqueRecs)
-        // Pre-fill target car for checkout if available
         if (uniqueRecs.length > 0) {
           const firstCarName = uniqueRecs[0].displayName || `${uniqueRecs[0].brand} ${getBaseModelName(uniqueRecs[0].name, uniqueRecs[0].brand)}`
           setCheckoutData(prev => ({ 
@@ -348,11 +287,11 @@ const AiCarFinder = () => {
           }))
         }
       } else {
-        setError('Failed to fetch recommendations from AI. Please try again.')
+        setError('The advisory server returned an empty recommendation block. Please modify budget limits.')
       }
     } catch (err) {
       console.error(err)
-      setError('Network connection error. Please try again.')
+      setError('Advisory recommendations failed to compile. Please check network connections.')
     } finally {
       setLoading(false)
     }
@@ -655,325 +594,489 @@ const AiCarFinder = () => {
           isDark ? 'bg-dark-900/40 border-dark-800' : 'bg-white border-slate-200'
         }`}>
           
-          {/* Section 1: Basic Preferences (Free & Unlocked) */}
-          <div className="space-y-6">
-            <h3 className="text-xs font-bold text-yellow-500 uppercase tracking-widest border-b border-slate-700/30 pb-2">
-              Step 1: Free Matchmaker Preferences
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              
-              {/* 1. Budget Range */}
-              <div className="space-y-2 font-sans">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <Car className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  Budget Range
-                </label>
-                <div className="relative">
-                  <select
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
+          {/* Step Indicator */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-4 sm:gap-6 max-w-lg mx-auto mb-4">
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <div key={s} className="flex items-center">
+                    <div 
+                      onClick={() => {
+                        if (s < currentStep) setCurrentStep(s);
+                      }}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        s < currentStep 
+                          ? 'bg-yellow-500 text-slate-950 cursor-pointer hover:scale-105' 
+                          : s === currentStep 
+                            ? 'bg-yellow-500/20 border-2 border-yellow-500 text-yellow-500 font-bold cursor-default' 
+                            : isDark ? 'bg-dark-800 text-slate-500' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {s}
+                    </div>
+                    {s < 5 && (
+                      <div className={`h-[2px] w-6 sm:w-10 transition-colors ${
+                        s < currentStep ? 'bg-yellow-500' : isDark ? 'bg-dark-800' : 'bg-slate-200'
+                      }`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Chevron back button immediately after step indicator tabs */}
+              <div className="w-8 h-8 flex items-center justify-center">
+                {currentStep > 1 && (
+                  <button
+                    onClick={() => setCurrentStep(prev => prev - 1)}
+                    className="p-1.5 rounded-xl bg-transparent hover:bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 hover:border-yellow-500/40 transition-all cursor-pointer flex items-center justify-center shadow-sm"
+                    title="Previous Step"
                   >
-                    <option value="< 10L">Under ₹10 Lakhs</option>
-                    <option value="10-15L">₹10 - ₹15 Lakhs</option>
-                    <option value="15-20L">₹15 - ₹20 Lakhs</option>
-                    <option value="20L+">Above ₹20 Lakhs</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 2. Seating Capacity */}
-              <div className="space-y-2 font-sans">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <Users className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  Seating Capacity
-                </label>
-                <div className="relative">
-                  <select
-                    value={seating}
-                    onChange={(e) => setSeating(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
-                  >
-                    <option value="2-4 Seats">2 - 4 Seats (Couples)</option>
-                    <option value="5 Seats">5 Seats (Small family)</option>
-                    <option value="7+ Seats">7+ Seats (Large MUV/SUV)</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 3. City Name */}
-              <div className="space-y-2 font-sans">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  Your City
-                </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="Enter your city (e.g. Mumbai, Jaipur)"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 font-sans"
-                />
-              </div>
-
-              {/* 4. Primary Usage */}
-              <div className="space-y-2 font-sans">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <Compass className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  Primary Usage Focus
-                </label>
-                <div className="relative">
-                  <select
-                    value={usage}
-                    onChange={(e) => setUsage(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
-                  >
-                    {getUsageOptions(classifyCity(city)).map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 5. Road & Terrain Conditions */}
-              <div className="space-y-2 font-sans">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <Compass className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  Road & Terrain Conditions
-                </label>
-                <div className="relative">
-                  <select
-                    value={terrain}
-                    onChange={(e) => setTerrain(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
-                  >
-                    {getTerrainOptions(classifyCity(city)).map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 6. Who is the Primary Driver? */}
-              <div className="space-y-2 font-sans">
-                <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  <Users className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                  Who is the Primary Driver?
-                </label>
-                <div className="relative">
-                  <select
-                    value={driver}
-                    onChange={(e) => setDriver(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
-                  >
-                    <option value="Beginner">Beginner / New driver (Wants Auto/Easy steering)</option>
-                    <option value="Senior">Senior Citizen / Elderly (Wants High seat/Easy entry)</option>
-                    <option value="Experienced">Experienced driver / Enthusiast (Wants power/stability)</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Section 2: Premium Parameters (Gated / Locked) */}
-          <div className="space-y-6 mt-8 pt-8 border-t border-slate-800/60">
-            <div className="flex items-center justify-between border-b border-slate-700/30 pb-2">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                {premiumUnlocked ? (
-                  <Unlock className="w-3 h-3 text-green-500" />
-                ) : (
-                  <Lock className="w-3 h-3 text-slate-500" />
+                    <ChevronLeft className="w-4.5 h-4.5" />
+                  </button>
                 )}
-                {premiumUnlocked ? 'Step 2: Premium Customization (Unlocked)' : 'Step 2: Locked Customization (Premium Report)'}
-              </h3>
-              {premiumUnlocked ? (
-                <span className="px-2 py-0.5 text-[10px] font-bold text-green-500 rounded-full flex items-center gap-1">
-                  Unlocked Premium
-                </span>
-              ) : (
-                <span className="text-[10px] font-bold text-yellow-500 rounded-full">
-                  🔒 Login to access
-                </span>
-              )}
+              </div>
             </div>
-            
-            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 transition-opacity duration-300 ${premiumUnlocked ? 'opacity-100' : 'opacity-75'}`}>
-              
-              {/* 1. Secondary Usage */}
-              <div className="space-y-2 font-sans relative">
-                <label className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${premiumUnlocked ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <Compass className={`w-3.5 h-3.5 shrink-0 ${premiumUnlocked ? 'text-yellow-500' : 'text-slate-600'}`} />
-                  Secondary Usage
-                </label>
-                <div className="relative">
-                  <select
-                    value={secondaryUsage}
-                    onChange={(e) => setSecondaryUsage(e.target.value)}
-                    disabled={!premiumUnlocked}
-                    className={`w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs font-semibold appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                      premiumUnlocked ? 'text-slate-200 cursor-pointer' : 'text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {!premiumUnlocked ? (
-                      <option>None / NA</option>
-                    ) : (
-                      getSecondaryUsageOptions(classifyCity(city)).map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))
-                    )}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  {!premiumUnlocked && (
-                    <div 
-                      onClick={handleLockClick} 
-                      className="absolute inset-0 z-10 cursor-pointer" 
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* 2. Financing Plan */}
-              <div className="space-y-2 font-sans relative">
-                <label className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${premiumUnlocked ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <DollarSign className={`w-3.5 h-3.5 shrink-0 ${premiumUnlocked ? 'text-yellow-500' : 'text-slate-600'}`} />
-                  Financial Financing Plans
-                </label>
-                <div className="relative">
-                  <select
-                    value={financePlan}
-                    onChange={(e) => setFinancePlan(e.target.value)}
-                    disabled={!premiumUnlocked}
-                    className={`w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs font-semibold appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                      premiumUnlocked ? 'text-slate-200 cursor-pointer' : 'text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {!premiumUnlocked ? (
-                      <option>Outright Cash Purchase</option>
-                    ) : (
-                      <>
-                        <option value="Outright Cash Purchase">Outright Cash Purchase</option>
-                        <option value="Downpayment + Monthly EMI Loan">Downpayment + Monthly EMI Loan</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  {!premiumUnlocked && (
-                    <div 
-                      onClick={handleLockClick} 
-                      className="absolute inset-0 z-10 cursor-pointer" 
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* 3. Resale Plans */}
-              <div className="space-y-2 font-sans relative">
-                <label className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${premiumUnlocked ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <Calendar className={`w-3.5 h-3.5 shrink-0 ${premiumUnlocked ? 'text-yellow-500' : 'text-slate-600'}`} />
-                  Resale & Upgrade Plans
-                </label>
-                <div className="relative">
-                  <select
-                    value={resalePlan}
-                    onChange={(e) => setResalePlan(e.target.value)}
-                    disabled={!premiumUnlocked}
-                    className={`w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs font-semibold appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                      premiumUnlocked ? 'text-slate-200 cursor-pointer' : 'text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {!premiumUnlocked ? (
-                      <option>Keep 3-5 Years</option>
-                    ) : (
-                      <>
-                        <option value="Keep for 3-5 years (Prioritize resale)">Keep for 3-5 years (Prioritize resale)</option>
-                        <option value="Keep for 7-10+ years (Prioritize longevity)">Keep for 7-10+ years (Prioritize longevity)</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  {!premiumUnlocked && (
-                    <div 
-                      onClick={handleLockClick} 
-                      className="absolute inset-0 z-10 cursor-pointer" 
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* 4. Maintenance Budget */}
-              <div className="space-y-2 font-sans relative">
-                <label className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${premiumUnlocked ? 'text-slate-400' : 'text-slate-500'}`}>
-                  <AlertCircle className={`w-3.5 h-3.5 shrink-0 ${premiumUnlocked ? 'text-yellow-500' : 'text-slate-600'}`} />
-                  Yearly Maintenance Budget
-                </label>
-                <div className="relative">
-                  <select
-                    value={maintenanceBudget}
-                    onChange={(e) => setMaintenanceBudget(e.target.value)}
-                    disabled={!premiumUnlocked}
-                    className={`w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs font-semibold appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                      premiumUnlocked ? 'text-slate-200 cursor-pointer' : 'text-slate-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {!premiumUnlocked ? (
-                      <option>Strict Low-Maintenance</option>
-                    ) : (
-                      <>
-                        <option value="Strict Low-Maintenance">Strict Low-Maintenance</option>
-                        <option value="Safety & build quality focus">Safety & build quality focus</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-600 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  {!premiumUnlocked && (
-                    <div 
-                      onClick={handleLockClick} 
-                      className="absolute inset-0 z-10 cursor-pointer" 
-                    />
-                  )}
-                </div>
-              </div>
-
+            <div className="text-center text-xs font-bold uppercase tracking-widest" style={{ color: isDark ? 'rgb(148, 163, 184)' : 'rgb(100, 116, 139)' }}>
+              {currentStep === 1 && "Step 1: Money & Budget"}
+              {currentStep === 2 && "Step 2: Your City"}
+              {currentStep === 3 && "Step 3: Your Life Profile"}
+              {currentStep === 4 && "Step 4: Daily Reality & Non-negotiables"}
+              {currentStep === 5 && "Step 5: Ownership Plan"}
             </div>
           </div>
 
-          {/* Centered Buttons */}
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button
-              onClick={() => handleReset()}
-              className={`px-6 py-4 rounded-2xl text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] border font-sans w-full sm:w-auto ${
-                isDark 
-                  ? 'bg-dark-950 border-dark-800 text-slate-400 hover:text-white hover:bg-dark-900' 
-                  : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-              }`}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-6"
             >
-              Reset Selection
-            </button>
-            <button
-              onClick={() => handleSearch()}
-              disabled={loading}
-              className="px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60 font-sans w-full sm:w-auto"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Searching Cars...</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-4 h-4" />
-                  <span>Find Cars with AI</span>
-                </>
+              {/* STEP 1: MONEY & BUDGET */}
+              {currentStep === 1 && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>What is your maximum budget?</h4>
+                    <p className="text-xs text-slate-400">Drag the slider to set your absolute limit</p>
+                  </div>
+                  
+                  <div className="max-w-md mx-auto space-y-4 pt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold" style={{ color: isDark ? 'rgb(148, 163, 184)' : 'rgb(100, 116, 139)' }}>
+                        ₹3 Lakhs
+                      </span>
+                      <span className="text-2xl font-black text-yellow-500">
+                        {budgetSlider >= 80 ? "₹80L+" : `₹${budgetSlider} Lakhs`}
+                      </span>
+                      <span className="text-xs font-bold" style={{ color: isDark ? 'rgb(148, 163, 184)' : 'rgb(100, 116, 139)' }}>
+                        ₹80L+
+                      </span>
+                    </div>
+                    <input 
+                      type="range"
+                      min="3"
+                      max="80"
+                      value={budgetSlider}
+                      onChange={(e) => setBudgetSlider(parseInt(e.target.value))}
+                      className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-yellow-500"
+                    />
+                  </div>
+
+                  <div className="border-t border-slate-800/40 my-6 pt-6 space-y-4">
+                    <h5 className="text-center text-xs font-bold uppercase tracking-wider text-slate-400">What is your comfortable monthly EMI?</h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 max-w-3xl mx-auto">
+                      {["Under ₹8K/month", "₹8K-₹12K", "₹12K-₹18K", "Above ₹18K", "Paying full, no EMI"].map(option => (
+                        <button
+                          key={option}
+                          onClick={() => setEmiComfort(option)}
+                          className={`p-3 rounded-xl border text-center transition-all text-xs font-semibold ${
+                            emiComfort === option
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                              : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-800/40 my-6 pt-6 space-y-4">
+                    <h5 className="text-center text-xs font-bold uppercase tracking-wider text-slate-400">Expected monthly fuel + maintenance spend?</h5>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto">
+                      {["Under ₹3K/month", "₹3K-₹6K", "₹6K-₹10K", "Above ₹10K"].map(option => (
+                        <button
+                          key={option}
+                          onClick={() => setMonthlyMaintSpend(option)}
+                          className={`p-3 rounded-xl border text-center transition-all text-xs font-semibold ${
+                            monthlyMaintSpend === option
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                              : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
-          </div>
+
+              {/* STEP 2: YOUR CITY */}
+              {currentStep === 2 && (
+                <div className="space-y-6 max-w-md mx-auto">
+                  <div className="text-center">
+                    <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Select your city</h4>
+                    <p className="text-xs text-slate-400">This helps filter models matching local infrastructure and charging station availability</p>
+                  </div>
+                  
+                  <div className="relative pt-4">
+                    <select
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 text-xs sm:text-sm font-semibold text-slate-200 appearance-none focus:outline-none focus:ring-2 focus:ring-yellow-500 cursor-pointer font-sans"
+                    >
+                      {[
+                        "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Ahmedabad", "Chennai", 
+                        "Kolkata", "Pune", "Jaipur", "Lucknow", "Nagpur", "Indore", "Bhopal", 
+                        "Visakhapatnam", "Patna", "Vadodara", "Coimbatore", "Ludhiana", 
+                        "Agra", "Nashik", "Surat", "Kochi", "Dehradun", "Gurugram", "Noida",
+                        "Rural / Tier 3"
+                      ].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: YOUR LIFE PROFILE */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Which profile describes you best?</h4>
+                    <p className="text-xs text-slate-400">Select one that matches your lifestyle</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto pt-4">
+                    {(() => {
+                      const tier = classifyCity(city);
+                      const rawProfiles = [
+                        {
+                          id: 'solo_commuter',
+                          title: 'Solo office commuter',
+                          getSubtitle: (t) => t === 'Tier 1' 
+                            ? 'Daily 20-60km, mostly alone, weekday driver' 
+                            : 'Daily commute to office or business, mostly alone',
+                          icon: '💼'
+                        },
+                        {
+                          id: 'young_couple',
+                          title: 'Young couple / DINK',
+                          getSubtitle: () => 'Both working, weekend trips, no kids yet',
+                          icon: '👫'
+                        },
+                        {
+                          id: 'small_family',
+                          title: 'Small family (1-2 kids)',
+                          getSubtitle: () => 'School runs, grocery, occasional highway',
+                          icon: '👨‍👩‍👧'
+                        },
+                        {
+                          id: 'joint_family',
+                          title: 'Joint family / large group',
+                          getSubtitle: () => '5-7 people regularly, need 3 rows',
+                          icon: '👨‍👩‍👧‍👦'
+                        },
+                        {
+                          id: 'adventure',
+                          title: 'Adventure / off-road',
+                          getSubtitle: () => 'Road trips, camping, rough terrain, trekking',
+                          icon: '🏕️'
+                        },
+                        {
+                          id: 'senior_citizen',
+                          title: 'Senior citizen / ease of use',
+                          getSubtitle: () => 'Easy entry/exit, light steering, simple controls',
+                          icon: '🧓'
+                        },
+                        {
+                          id: 'new_driver',
+                          title: 'New / learner driver',
+                          getSubtitle: () => 'Just got licence, need something easy and forgiving',
+                          icon: '🎓'
+                        },
+                        {
+                          id: 'commercial',
+                          title: 'Commercial / cab / delivery',
+                          getSubtitle: () => 'High daily kms, durability matters most',
+                          icon: '📦'
+                        }
+                      ];
+                      
+                      let profiles = [...rawProfiles];
+                      if (tier !== 'Tier 1') {
+                        const adv = profiles.splice(4, 1)[0];
+                        const comm = profiles.splice(6, 1)[0];
+                        profiles.splice(2, 0, adv, comm);
+                      }
+                      
+                      return profiles.map(profile => (
+                        <div
+                          key={profile.id}
+                          onClick={() => setLifeProfile(profile.id)}
+                          className={`p-5 rounded-2xl border text-left transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex flex-col items-start gap-3 ${
+                            lifeProfile === profile.id
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                              : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                          }`}
+                        >
+                          <span className="text-3xl">{profile.icon}</span>
+                          <div>
+                            <h5 className="font-bold text-sm" style={{ color: isDark ? 'rgb(148, 163, 184)' : 'rgb(100, 116, 139)' }}>
+                              {profile.title}
+                            </h5>
+                            <p className="text-xs text-slate-600 mt-1 leading-relaxed">{profile.getSubtitle(tier)}</p>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4: DAILY REALITY & NON-NEGOTIABLES */}
+              {currentStep === 4 && (
+                <div className="space-y-8">
+                  {/* Daily Reality */}
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>What is your Daily Reality / usage?</h4>
+                      <p className="text-xs text-slate-400">Select up to 2 options that reflect your primary drives ({dailyReality.length}/2)</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto pt-2">
+                      {[
+                        "Daily office commute (city)",
+                        "Long highway commute (100km+/day)",
+                        "School runs + errands",
+                        "Weekend family outings",
+                        "Intercity highway travel",
+                        "Off-road / adventure",
+                        "Commercial / cab / high daily kms",
+                        "Occasional use / second car"
+                      ].map(option => {
+                        const isSelected = dailyReality.includes(option);
+                        const isMaxReached = dailyReality.length >= 2;
+                        return (
+                          <button
+                            key={option}
+                            onClick={() => {
+                              if (isSelected) {
+                                setDailyReality(dailyReality.filter(x => x !== option));
+                              } else {
+                                if (isMaxReached) {
+                                  setDailyReality([...dailyReality.slice(1), option]);
+                                } else {
+                                  setDailyReality([...dailyReality, option]);
+                                }
+                              }
+                            }}
+                            className={`p-3.5 rounded-xl border text-center transition-all text-xs font-semibold ${
+                              isSelected
+                                ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                                : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Non-negotiables */}
+                  <div className="space-y-4 border-t border-slate-800/40 pt-6">
+                    <div className="text-center">
+                      <h4 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Your Must-Haves (Non-negotiables)</h4>
+                      <p className="text-xs text-slate-400">Select all features that you cannot compromise on</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 max-w-5xl mx-auto pt-2">
+                      {(() => {
+                        const tier = classifyCity(city);
+                        const rawNonNegs = [
+                          { id: 'automatic', label: 'Automatic transmission only' },
+                          { id: 'ground_clearance', label: 'High ground clearance' },
+                          { id: 'airbags', label: '6+ airbags (safety first)' },
+                          { id: 'cng', label: 'CNG / low fuel cost' },
+                          { id: 'ev', label: 'EV / electric' },
+                          { id: 'easy_parking', label: 'Easy parking in tight lanes' },
+                          { id: 'big_boot', label: 'Big boot / luggage space' },
+                          { id: 'resale', label: 'Strong resale value' },
+                          { id: 'low_service', label: 'Low service cost' },
+                          { id: 'awd', label: '4WD / AWD' }
+                        ];
+                        
+                        let list = [...rawNonNegs];
+                        if (tier !== 'Tier 1') {
+                          const gc = list.splice(1, 1)[0];
+                          list.unshift(gc);
+                        }
+                        
+                        return list.map(item => {
+                          const isSelected = nonNegotiables.includes(item.label);
+                          const isDisabled = item.id === 'ev' && (tier === 'Rural' || tier === 'Tier 3');
+                          
+                          return (
+                            <div key={item.id} className="relative group">
+                              <button
+                                disabled={isDisabled}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setNonNegotiables(nonNegotiables.filter(x => x !== item.label));
+                                  } else {
+                                    setNonNegotiables([...nonNegotiables, item.label]);
+                                  }
+                                }}
+                                className={`w-full p-3.5 rounded-xl border text-center transition-all text-xs font-semibold flex flex-col justify-between items-center min-h-[70px] ${
+                                  isDisabled
+                                    ? 'border-dark-900 bg-slate-950 opacity-40 cursor-not-allowed text-slate-600'
+                                    : isSelected
+                                      ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                                      : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                                }`}
+                              >
+                                <span>{item.label}</span>
+                                {isDisabled && (
+                                  <span className="text-[9px] text-red-500 mt-1 font-bold">Limited charging infra</span>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 5: OWNERSHIP PLAN */}
+              {currentStep === 5 && (
+                <div className="space-y-6">
+                  {/* Tenure */}
+                  <div className="space-y-4">
+                    <h5 className="text-center text-xs font-bold uppercase tracking-wider text-slate-400">How long do you plan to keep this car?</h5>
+                    <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
+                      {["2-3 years", "4-6 years", "7+ years"].map(option => (
+                        <button
+                          key={option}
+                          onClick={() => setKeepDuration(option)}
+                          className={`p-3 rounded-xl border text-center transition-all text-xs font-semibold ${
+                            keepDuration === option
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                              : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Fuel Preference */}
+                  <div className="space-y-4 border-t border-slate-800/40 pt-6">
+                    <h5 className="text-center text-xs font-bold uppercase tracking-wider text-slate-400">Preferred fuel type?</h5>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 max-w-3xl mx-auto">
+                      {["Petrol", "Diesel", "CNG", "Hybrid", "Electric (EV)", "No preference"].map(option => (
+                        <button
+                          key={option}
+                          onClick={() => setFuelPref(option)}
+                          className={`p-3 rounded-xl border text-center transition-all text-xs font-semibold ${
+                            fuelPref === option
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                              : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Resale Importance */}
+                  <div className="space-y-4 border-t border-slate-800/40 pt-6">
+                    <h5 className="text-center text-xs font-bold uppercase tracking-wider text-slate-400">How important is resale value to you?</h5>
+                    <div className="grid grid-cols-3 gap-3 max-w-xl mx-auto">
+                      {["Critical — I will sell it", "Prefer good resale", "Don't care — keeping long"].map(option => (
+                        <button
+                          key={option}
+                          onClick={() => setResaleImportance(option)}
+                          className={`p-3 rounded-xl border text-center transition-all text-xs font-semibold ${
+                            resaleImportance === option
+                              ? 'border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-md'
+                              : isDark ? 'border-dark-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
+                          }`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Wizard Actions */}
+              <div className="mt-8 flex items-center justify-between border-t border-slate-800/40 pt-6 max-w-3xl mx-auto">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleReset()}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02] border ${
+                      isDark 
+                        ? 'bg-dark-950 border-dark-800 text-slate-400 hover:text-white' 
+                        : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Reset Form
+                  </button>
+                </div>
+
+                <div>
+                  {currentStep < 5 ? (
+                    <button
+                      onClick={() => setCurrentStep(prev => prev + 1)}
+                      className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1 hover:scale-[1.02] active:scale-[0.98] transition-all font-sans"
+                    >
+                      <span>Next Step</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleSearch()}
+                      disabled={loading}
+                      className="px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60 font-sans"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Searching Matches...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Find My Car</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Main Content Layout */}
@@ -1011,12 +1114,17 @@ const AiCarFinder = () => {
                 exit={{ opacity: 0, y: 15 }}
                 className="space-y-8"
               >
-                {noExactMatch && (
+                {relaxedNonNegotiables ? (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
+                    <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                    <span>⚠️ No cars fully match all your must-haves — here are the closest options:</span>
+                  </div>
+                ) : noExactMatch ? (
                   <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-2xl flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
                     <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
                     <span>⚠️ We couldn't find an exact match within your budget. Showing the closest alternatives:</span>
                   </div>
-                )}
+                ) : null}
                 <div className="border-b pb-2 border-slate-200 dark:border-slate-800">
                   <h2 className={`text-sm sm:text-base font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
                     I have found some great options for you. Here's a quick look at the best ones.

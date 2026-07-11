@@ -11,7 +11,7 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 */
 
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SearchBar from '../components/SearchBar'
 import Carousel from '../components/Carousel'
@@ -102,11 +102,39 @@ const TESTIMONIALS = [
 ]
 
 // ========================================
+// HERO SEARCH CARD - Matches Wireframe Card
+// ========================================
+
+const HeroSearchCard = () => {
+  const navigate = useNavigate()
+  
+  return (
+    <div className="w-full bg-black/35 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 text-left font-sans transition-all duration-300">
+      <h3 className="text-xl sm:text-2xl font-extrabold text-white mb-2 leading-tight">
+        Find your right car using AI
+      </h3>
+      <p className="text-xs sm:text-sm text-white/70 mb-6 leading-relaxed">
+        Answer a few simple questions about your budget, lifestyle, and driving needs to find your perfect match instantly.
+      </p>
+      
+      {/* Launch Search Button */}
+      <button
+        onClick={() => navigate('/ai-car-finder')}
+        className="w-full py-4 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-yellow-500/10 flex items-center justify-center gap-2 cursor-pointer font-sans"
+      >
+        <span>Launch AI Car Finder</span>
+      </button>
+    </div>
+  )
+}
+
+// ========================================
 // HOME COMPONENT - Functional with Hooks
 // ========================================
 
 const Home = () => {
   const { isDark } = useTheme()
+  const navigate = useNavigate()
   const [travelogues, setTravelogues] = useState([])
   const [featuredArticles, setFeaturedArticles] = useState([])
   const [loading, setLoading] = useState(true)
@@ -177,6 +205,11 @@ const Home = () => {
       `}</style>
         <div className="w-full relative aspect-[4/5] lg:aspect-[1672/941] ds-hero-box">
 
+          {/* Floating Search Card on Desktop (md screens and above) */}
+          <div className="absolute left-16 sm:left-20 lg:left-28 top-1/2 -translate-y-1/2 z-40 hidden md:block w-[340px] lg:w-[380px]">
+            <HeroSearchCard />
+          </div>
+
           {BANNERS.map((banner, index) => (
             <div
               key={banner.id}
@@ -215,11 +248,7 @@ const Home = () => {
             </div>
           ))}
 
-          {/* Left Arrow Button — moved down from the geometric center (which sat
-            right on top of the poster's title/icon text) to ~64% down, which
-            sits in the car-photo/road area on every banner instead of on top
-            of text. Also sized down so it doesn't dominate a narrow phone
-            screen. */}
+          {/* Left Arrow Button — kept at the far left edge of the page */}
           <button
             onClick={() => goToSlide((currentSlide - 1 + BANNERS.length) % BANNERS.length)}
             className="absolute left-1.5 xs:left-2 sm:left-4 md:left-6 top-[64%] -translate-y-1/2 transform z-30 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 flex items-center justify-center text-black shadow-lg hover:shadow-xl hover:scale-105"
@@ -230,7 +259,7 @@ const Home = () => {
             </svg>
           </button>
 
-          {/* Right Arrow Button - same repositioning/resizing as the left one */}
+          {/* Right Arrow Button - kept at the far right edge of the page */}
           <button
             onClick={() => goToSlide((currentSlide + 1) % BANNERS.length)}
             className="absolute right-1.5 xs:right-2 sm:right-4 md:right-6 top-[64%] -translate-y-1/2 transform z-30 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 flex items-center justify-center text-black shadow-lg hover:shadow-xl hover:scale-105"
@@ -242,11 +271,7 @@ const Home = () => {
           </button>
         </div>
 
-        {/* Dots — pulled up well clear of the CTA button (which sits at
-          bottom-2/left-2 on mobile) so the two rows never visually merge into
-          one bar the way they were before. Reverts to a small, tight offset at
-          lg: since the landscape desktop banner is tall enough in real pixels
-          that there's no crowding risk there. */}
+        {/* Dots */}
         <div className="flex justify-center items-center gap-1 xs:gap-1.5 sm:gap-2 md:gap-2.5 absolute bottom-10 xs:bottom-12 sm:bottom-14 md:bottom-16 lg:bottom-6 left-0 right-0 z-20">
           {BANNERS.map((_, index) => (
             <button
@@ -266,6 +291,11 @@ const Home = () => {
               />
             </button>
           ))}
+        </div>
+
+        {/* Render inline card below hero on mobile (under md screen) */}
+        <div className="md:hidden p-4 bg-slate-900 border-b border-slate-800">
+          <HeroSearchCard />
         </div>
       </section>
     )

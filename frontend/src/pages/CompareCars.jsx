@@ -1548,17 +1548,6 @@ const CompareCars = () => {
                   </button>
                 )}
               </div>
-
-              {/* Centered Launch AI Car Finder CTA button directly below */}
-              <div className="text-center mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-slate-250/20 dark:border-dark-800/40 max-w-md mx-auto">
-                <button
-                  onClick={() => navigate('/ai-car-finder')}
-                  className="w-full sm:w-auto sm:min-w-[280px] max-w-full px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg font-bold text-sm sm:text-base border-2 border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 hover:border-yellow-400 hover:text-yellow-400 transition-all duration-300 flex items-center justify-center gap-2 bg-transparent mx-auto"
-                >
-                  <Sparkles className="w-4.5 h-4.5 text-yellow-500" />
-                  <span>Launch AI Car Finder</span>
-                </button>
-              </div>
             </div>
           </div>
         </section>
