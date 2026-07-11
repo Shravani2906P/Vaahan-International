@@ -616,6 +616,21 @@ const AiCarFinder = () => {
     })
   }
 
+  // Format quick pick verdict strings by extracting bolded keywords and joining them with ' + '
+  const formatQuickPickVerdict = (text) => {
+    if (!text) return ''
+    const matches = [...text.matchAll(/\*\*(.*?)\*\*/g)].map(m => m[1].trim())
+    if (matches.length > 0) {
+      const uniqueReasons = Array.from(new Set(matches))
+      return uniqueReasons.map(r => {
+        return r
+          .replace(/\bmmmm\b/gi, 'mm')
+          .replace(/turning radius of ([\d.]+)\s*mm/gi, 'turning radius of $1 m')
+      }).join(' + ')
+    }
+    return text.replace(/\*\*/g, '')
+  }
+
   return (
     <div className={`min-h-screen pt-24 pb-16 transition-colors duration-300 ${
       isDark ? 'bg-dark-950 text-white' : 'bg-[#FFFDFC] text-slate-900'
@@ -1088,7 +1103,7 @@ const AiCarFinder = () => {
                             {car.displayName || (car.brand + " " + car.name)}
                           </button>
                           <span className={`${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
-                            - {formatVerdict(car.verdict)}
+                            - {formatQuickPickVerdict(car.verdict)}
                           </span>
                         </div>
                       </li>
