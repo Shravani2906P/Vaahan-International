@@ -20,6 +20,7 @@ const AdminPage = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [contentType, setContentType] = useState('article') // 'article' or 'travelogue'
   const [manageType, setManageType] = useState('article') // 'article' or 'travelogue'
+  const [editorBlocks, setEditorBlocks] = useState([])
 
   // Loading & Message State for publishing
   const [isLoading, setIsLoading] = useState(false)
@@ -93,6 +94,164 @@ const AdminPage = () => {
     }
     reader.readAsDataURL(file)
   }
+
+  // --- BLOCK EDITOR HELPER FUNCTIONS & SERIALIZATION ---
+  const addSubheadingBlock = () => {
+    setEditorBlocks(prev => [
+      ...prev,
+      { id: Date.now(), type: 'subheading', text: '', color: 'orange' }
+    ])
+  }
+
+  const addBodyBlock = () => {
+    setEditorBlocks(prev => [
+      ...prev,
+      { id: Date.now(), type: 'body', text: '' }
+    ])
+  }
+
+  const addCalloutBlock = () => {
+    setEditorBlocks(prev => [
+      ...prev,
+      { id: Date.now(), type: 'callout', title: '', color: 'yellow', style: 'points', text: '' }
+    ])
+  }
+
+  const addAffiliateBlock = () => {
+    setEditorBlocks(prev => [
+      ...prev,
+      { id: Date.now(), type: 'affiliate', text: 'View Offer', url: '' }
+    ])
+  }
+
+  const moveBlockUp = (index) => {
+    if (index === 0) return
+    setEditorBlocks(prev => {
+      const copy = [...prev]
+      const temp = copy[index]
+      copy[index] = copy[index - 1]
+      copy[index - 1] = temp
+      return copy
+    })
+  }
+
+  const moveBlockDown = (index) => {
+    setEditorBlocks(prev => {
+      if (index === prev.length - 1) return prev
+      const copy = [...prev]
+      const temp = copy[index]
+      copy[index] = copy[index + 1]
+      copy[index + 1] = temp
+      return copy
+    })
+  }
+
+  const deleteBlock = (id) => {
+    setEditorBlocks(prev => prev.filter(block => block.id !== id))
+  }
+
+  const updateBlockField = (id, fieldName, value) => {
+    setEditorBlocks(prev => prev.map(block => {
+      if (block.id === id) {
+        return { ...block, [fieldName]: value }
+      }
+      return block
+    }))
+  }
+
+  // Serialize blocks to HTML content string for preview & submission
+  useEffect(() => {
+    if (editorBlocks.length === 0) {
+      setFormData(prev => ({
+        ...prev,
+        content: ''
+      }))
+      return
+    }
+
+    const htmlContent = editorBlocks.map(block => {
+      if (block.type === 'subheading') {
+        const borderColors = {
+          orange: 'border-[#F97316]',
+          yellow: 'border-yellow-500',
+          green: 'border-emerald-500',
+          blue: 'border-sky-500'
+        }
+        const borderColor = borderColors[block.color] || 'border-[#F97316]'
+        return `<h2 class="text-2xl font-bold border-l-4 ${borderColor} pl-4 py-1 text-white my-6 font-sans">${block.text || ''}</h2>`
+      }
+      
+      if (block.type === 'body') {
+        return (block.text || '')
+          .split('\n\n')
+          .map(para => para.trim())
+          .filter(para => para)
+          .map(para => `<p class="my-4 leading-relaxed text-slate-200">${para.replace(/\n/g, '<br />')}</p>`)
+          .join('')
+      }
+
+      if (block.type === 'callout') {
+        const borderColors = {
+          orange: 'border-[#F97316]',
+          yellow: 'border-yellow-500',
+          green: 'border-emerald-500',
+          blue: 'border-sky-500'
+        }
+        const borderColor = borderColors[block.color] || 'border-[#F97316]'
+        
+        let innerHtml = ''
+        if (block.style === 'points') {
+          const items = (block.text || '').split('\n').map(line => line.trim()).filter(l => l)
+          innerHtml = `<ul class="space-y-3">` + items.map(item => {
+            if (item.includes(':')) {
+              const [label, desc] = item.split(/:(.+)/)
+              return `<li class="text-slate-200 text-sm"><strong class="text-white">${label.trim()}:</strong> ${desc ? desc.trim() : ''}</li>`
+            }
+            return `<li class="text-slate-200 text-sm">${item}</li>`
+          }).join('') + `</ul>`
+        } else {
+          innerHtml = (block.text || '')
+            .split('\n\n')
+            .map(para => para.trim())
+            .filter(p => p)
+            .map(para => `<p class="text-slate-200 text-sm leading-relaxed">${para.replace(/\n/g, '<br />')}</p>`)
+            .join('')
+        }
+
+        return `
+          <div class="bg-slate-900/60 border-l-4 ${borderColor} rounded-r-2xl p-6 my-6 shadow-md">
+            ${block.title ? `<h3 class="text-lg font-bold text-white mb-4">${block.title}</h3>` : ''}
+            ${innerHtml}
+          </div>
+        `
+      }
+
+      if (block.type === 'affiliate') {
+        return `
+          <div class="my-8 flex justify-center">
+            <a 
+              href="${block.url || '#'}" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              class="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 text-sm"
+            >
+              <span>${block.text || 'View Offer'}</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
+        `
+      }
+
+      return ''
+    }).join('\n')
+
+    setFormData(prev => ({
+      ...prev,
+      content: htmlContent
+    }))
+  }, [editorBlocks])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -207,6 +366,16 @@ const AdminPage = () => {
       showLoanCTA: item.showLoanCTA || false,
       showInsuranceCTA: item.showInsuranceCTA || false,
     })
+    
+    // Load blocks from article or fallback to a single default body block
+    if (item.blocks && Array.isArray(item.blocks)) {
+      setEditorBlocks(item.blocks)
+    } else {
+      setEditorBlocks([
+        { id: Date.now(), type: 'body', text: item.content || '' }
+      ])
+    }
+
     setActiveTab('write')
     setMessage({ type: '', text: '' })
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -235,6 +404,7 @@ const AdminPage = () => {
       showLoanCTA: false,
       showInsuranceCTA: false,
     })
+    setEditorBlocks([])
     setMessage({ type: '', text: '' })
   }
 
@@ -299,14 +469,18 @@ const AdminPage = () => {
 
     try {
       let response
+      const payload = {
+        ...formData,
+        blocks: editorBlocks
+      }
       if (isEditing) {
         response = contentType === 'article'
-          ? await api.updateArticle(editingId, formData, token)
-          : await api.updateTravelogue(editingId, formData, token)
+          ? await api.updateArticle(editingId, payload, token)
+          : await api.updateTravelogue(editingId, payload, token)
       } else {
         response = contentType === 'article'
-          ? await api.createArticle(formData, token)
-          : await api.createTravelogue(formData, token)
+          ? await api.createArticle(payload, token)
+          : await api.createTravelogue(payload, token)
       }
 
       if (response.success) {
@@ -854,19 +1028,224 @@ const AdminPage = () => {
                   />
                 </div>
 
-                {/* Content */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    {contentType === 'article' ? 'Article Body (Markdown / Text)' : 'Travelogue Body (Markdown / Text)'} <span className="text-rose-400">*</span>
+                {/* Block-Based Editor */}
+                <div className="space-y-6">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                    <span>Structured Article Body Content (Blocks)</span>
+                    <span className="text-[10px] text-yellow-500 font-bold lowercase bg-yellow-500/10 px-2 py-0.5 rounded-full">drag-free modular builder</span>
                   </label>
-                  <textarea
-                    name="content"
-                    value={formData.content}
-                    onChange={handleInputChange}
-                    rows="14"
-                    placeholder="Write the full content here. You can use markdown or plain paragraphs."
-                    className="w-full bg-slate-900/60 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"
-                  />
+                  
+                  {editorBlocks.length === 0 ? (
+                    <div className="border border-dashed border-slate-700/60 rounded-2xl p-8 text-center bg-slate-900/10">
+                      <p className="text-sm text-slate-400 mb-4">No content blocks added yet. Click a button below to start building your article.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {editorBlocks.map((block, idx) => (
+                        <div key={block.id || idx} className="bg-slate-900/35 border border-slate-700/60 rounded-2xl p-4 md:p-5 relative transition-all hover:border-slate-650 flex flex-col gap-4">
+                          
+                          {/* Block Header & Ordering Actions */}
+                          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 bg-slate-800 text-slate-350 text-[10px] rounded font-bold uppercase tracking-wider">
+                                Block {idx + 1}
+                              </span>
+                              <span className="px-2 py-0.5 bg-yellow-500/10 text-yellow-500 text-[10px] rounded font-bold uppercase tracking-wide">
+                                {block.type}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => moveBlockUp(idx)}
+                                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                title="Move Up"
+                              >
+                                ▲
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === editorBlocks.length - 1}
+                                onClick={() => moveBlockDown(idx)}
+                                className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                                title="Move Down"
+                              >
+                                ▼
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => deleteBlock(block.id)}
+                                className="p-1 hover:bg-rose-500/20 rounded text-rose-450 hover:text-rose-450 transition-colors"
+                                title="Delete Block"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Block-specific Fields */}
+                          {block.type === 'subheading' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                              <div className="sm:col-span-2">
+                                <label className="block text-[10px] text-slate-400 font-semibold mb-1">Subheading Text</label>
+                                <input
+                                  type="text"
+                                  value={block.text || ''}
+                                  onChange={(e) => updateBlockField(block.id, 'text', e.target.value)}
+                                  placeholder="e.g. The Dealer Promise"
+                                  className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400 font-semibold mb-1">Left Line Indicator Color</label>
+                                <select
+                                  value={block.color || 'orange'}
+                                  onChange={(e) => updateBlockField(block.id, 'color', e.target.value)}
+                                  className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                >
+                                  <option value="orange">Orange (Theme)</option>
+                                  <option value="yellow">Yellow</option>
+                                  <option value="green">Green</option>
+                                  <option value="blue">Blue</option>
+                                </select>
+                              </div>
+                            </div>
+                          )}
+
+                          {block.type === 'body' && (
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-semibold mb-1">Body Text Content (supports multi-line paragraphs)</label>
+                              <textarea
+                                value={block.text || ''}
+                                onChange={(e) => updateBlockField(block.id, 'text', e.target.value)}
+                                rows={4}
+                                placeholder="Enter body text content. Separate paragraphs with double enter (empty line)."
+                                className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                              />
+                            </div>
+                          )}
+
+                          {block.type === 'callout' && (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[10px] text-slate-400 font-semibold mb-1">Callout Title</label>
+                                  <input
+                                    type="text"
+                                    value={block.title || ''}
+                                    onChange={(e) => updateBlockField(block.id, 'title', e.target.value)}
+                                    placeholder="e.g. Indian Road Reality"
+                                    className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 font-semibold mb-1">Color Theme</label>
+                                  <select
+                                    value={block.color || 'yellow'}
+                                    onChange={(e) => updateBlockField(block.id, 'color', e.target.value)}
+                                    className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                  >
+                                    <option value="yellow">Yellow</option>
+                                    <option value="green">Green</option>
+                                    <option value="blue">Blue</option>
+                                    <option value="orange">Orange</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-[10px] text-slate-400 font-semibold mb-1">Rendering Style</label>
+                                  <select
+                                    value={block.style || 'points'}
+                                    onChange={(e) => updateBlockField(block.id, 'style', e.target.value)}
+                                    className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                  >
+                                    <option value="points">Key: Description List (One per line)</option>
+                                    <option value="paragraphs">Standard Paragraphs</option>
+                                  </select>
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[10px] text-slate-400 font-semibold mb-1">
+                                    {block.style === 'points' ? 'List Items (one per line, e.g. Faded lane markings: Camera goes blind)' : 'Box Paragraphs (supports double newline for spacing)'}
+                                  </label>
+                                  <textarea
+                                    value={block.text || ''}
+                                    onChange={(e) => updateBlockField(block.id, 'text', e.target.value)}
+                                    rows={4}
+                                    placeholder={block.style === 'points' ? "Faded lane markings: Camera cannot detect missing lines\nHeavy rain: Camera goes blind" : "Enter standard box paragraphs."}
+                                    className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {block.type === 'affiliate' && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-[10px] text-slate-400 font-semibold mb-1">Button text label</label>
+                                <input
+                                  type="text"
+                                  value={block.text || ''}
+                                  onChange={(e) => updateBlockField(block.id, 'text', e.target.value)}
+                                  placeholder="e.g. View Best Deals on Hyundai Creta"
+                                  className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-slate-400 font-semibold mb-1">Affiliate Link / Button URL</label>
+                                <input
+                                  type="text"
+                                  value={block.url || ''}
+                                  onChange={(e) => updateBlockField(block.id, 'url', e.target.value)}
+                                  placeholder="https://affiliate-partner.com/deal"
+                                  className="w-full bg-slate-950/60 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Block Options Panel */}
+                  <div className="border border-slate-700/60 rounded-2xl p-4 bg-slate-900/10 space-y-3">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Choose Element to Append</p>
+                    <div className="flex flex-wrap gap-2.5">
+                      <button
+                        type="button"
+                        onClick={addSubheadingBlock}
+                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>➕ Add Subheading</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={addBodyBlock}
+                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>➕ Add Body Paragraph</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={addCalloutBlock}
+                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>➕ Add Styled Callout Box</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={addAffiliateBlock}
+                        className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold transition-all border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <span>➕ Add Affiliate Link</span>
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>

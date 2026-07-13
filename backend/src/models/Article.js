@@ -38,6 +38,10 @@ const ArticleSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  blocks: {
+    type: Array,
+    default: undefined,
+  },
   author: {
     type: String,
     required: true,

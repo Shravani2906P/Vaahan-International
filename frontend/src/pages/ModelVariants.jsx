@@ -57,13 +57,19 @@ const ModelVariants = () => {
     ? variants.filter(v => matchingVariants.some(mv => mv.name.toLowerCase().trim() === v.name.toLowerCase().trim()))
     : variants;
 
-  // Hydrate on-road price if matched
+  // Hydrate on-road price if matched and sort recommended variant to the front
   const processedVariants = (relevantVariants.length > 0 ? relevantVariants : variants).map(v => {
     const match = matchingVariants?.find(mv => mv.name.toLowerCase().trim() === v.name.toLowerCase().trim());
     return {
       ...v,
       onRoadPrice: match ? match.onRoadPrice : v.onRoadPrice
     };
+  }).sort((a, b) => {
+    const isARecommended = recommendedVariant && recommendedVariant.toLowerCase().trim() === a.name.toLowerCase().trim();
+    const isBRecommended = recommendedVariant && recommendedVariant.toLowerCase().trim() === b.name.toLowerCase().trim();
+    if (isARecommended && !isBRecommended) return -1;
+    if (!isARecommended && isBRecommended) return 1;
+    return 0;
   });
 
   // Basis for recommended tag

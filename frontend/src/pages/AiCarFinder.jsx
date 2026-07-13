@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
-import { useLocation } from '../context/LocationContext'
+import { useDsLocation } from '../context/LocationContext'
 import { api } from '../services/api'
 import { jsPDF } from 'jspdf'
 import { 
@@ -48,7 +48,7 @@ const getBaseModelName = (name, brand) => {
 const AiCarFinder = () => {
   const { isDark } = useTheme()
   const navigate = useNavigate()
-  const { location } = useLocation()
+  const { location } = useDsLocation()
 
   // --- WIZARD STATES ---
   const [currentStep, setCurrentStep] = useState(1)
