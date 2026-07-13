@@ -1,47 +1,62 @@
 // backend/src/services/pricing/roadTaxService.js
-class RoadTaxService {
-  calculate({ exShowroomPrice, rules }) {
-    if (!rules || !rules.type) {
-      return 0;
-    }
+/*
+================================================================================
+File Name : roadTaxService.js
+Description : Computes road tax from a state's configured slabs. No tax
+              rate is hardcoded here — every number comes from the
+              StatePricingRule document passed in.
+================================================================================
+*/
 
-    let tax = 0;
+/**
+ * Pick the fuel-category slab list a given fuelType should use.
+ */
+const getSlabsForFuelType = (roadTaxRules, fuelType) => {
+  if (!roadTaxRules) return [];
+  const normalized = String(fuelType || '').toLowerCase();
 
-    switch (rules.type) {
-      case 'percentage':
-        tax = (exShowroomPrice * (rules.percentage || 0)) / 100;
-        break;
+  if (normalized === 'electric') return roadTaxRules.ev || [];
+  if (normalized === 'cng') return roadTaxRules.cng || [];
+  // Petrol, Diesel, Hybrid, N/A, and anything else fall back to the
+  // standard petrol/diesel slab — states that want to differentiate
+  // Hybrid can add a dedicated slab list later without touching this code.
+  return roadTaxRules.petrolDiesel || [];
+};
 
-      case 'slab':
-        if (rules.slabs && Array.isArray(rules.slabs)) {
-          for (const slab of rules.slabs) {
-            if (exShowroomPrice >= slab.minPrice && 
-                (slab.maxPrice === 0 || exShowroomPrice <= slab.maxPrice)) {
-              tax = (exShowroomPrice * (slab.rate || 0)) / 100;
-              break;
-            }
-          }
-        }
-        break;
+/**
+ * Find the slab whose [minPrice, maxPrice) range contains exShowroomPrice.
+ * If no slab matches (e.g. an empty/misconfigured state), returns null.
+ */
+const findMatchingSlab = (slabs, exShowroomPrice) => {
+  if (!Array.isArray(slabs) || slabs.length === 0) return null;
 
-      case 'fixed':
-        tax = rules.fixedAmount || 0;
-        break;
+  return (
+    slabs.find((slab) => {
+      const aboveMin = exShowroomPrice >= (slab.minPrice ?? 0);
+      const belowMax = slab.maxPrice == null || exShowroomPrice < slab.maxPrice;
+      return aboveMin && belowMax;
+    }) || null
+  );
+};
 
-      default:
-        tax = 0;
-    }
+/**
+ * Calculate road tax.
+ * @param {Object} params
+ * @param {number} params.exShowroomPrice
+ * @param {string} params.fuelType
+ * @param {Object} params.stateRule - a StatePricingRule document (lean)
+ * @returns {{ amount: number, ratePercent: number, slabUsed: Object|null }}
+ */
+const calculateRoadTax = ({ exShowroomPrice, fuelType, stateRule }) => {
+  const slabs = getSlabsForFuelType(stateRule?.roadTax, fuelType);
+  const slab = findMatchingSlab(slabs, exShowroomPrice);
 
-    // Apply min and max tax limits
-    if (rules.minTax && tax < rules.minTax) {
-      tax = rules.minTax;
-    }
-    if (rules.maxTax && tax > rules.maxTax) {
-      tax = rules.maxTax;
-    }
-
-    return tax;
+  if (!slab) {
+    return { amount: 0, ratePercent: 0, slabUsed: null };
   }
-}
 
-module.exports = RoadTaxService;
+  const amount = Math.round((exShowroomPrice * slab.ratePercent) / 100);
+  return { amount, ratePercent: slab.ratePercent, slabUsed: slab };
+};
+
+module.exports = { calculateRoadTax, getSlabsForFuelType, findMatchingSlab };

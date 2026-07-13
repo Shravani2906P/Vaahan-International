@@ -1,250 +1,203 @@
 // backend/src/controllers/pricingController.js
-const PricingEngine = require('../services/pricing');
-const Variant = require('../models/Variant');
-const Model = require('../models/Model');
-const Brand = require('../models/Brand');
-const LocationService = require('../services/locationService');
+/*
+================================================================================
+File Name : pricingController.js
+Description : GET /api/pricing — takes a variant + city/state (and
+              optional loan/accessory selections) and returns the full
+              on-road price breakdown. This is the only place that
+              bridges the vehicle database (Variant), the location
+              database (Location), the accessory catalog
+              (AccessoryOption), and the pricing engine
+              (services/pricing) — the engine itself never imports any of
+              those models, keeping it fully reusable and testable in
+              isolation.
+Company : Vaahan International
+Copyright : (c) 2026 Vaahan International. All rights reserved.
+================================================================================
+*/
 
-// Calculate on-road price for a variant
-exports.calculateOnRoadPrice = async (req, res) => {
+const Variant = require('../models/Variant');
+const Location = require('../models/Location');
+const AccessoryOption = require('../models/AccessoryOption');
+const { calculateOnRoadPrice } = require('../services/pricing/calculator');
+const { resolveStateRule } = require('../services/pricing/stateRuleResolver');
+
+/**
+ * Shared resolution used by both the single and bulk endpoints: the
+ * state rule, the optional city Location doc (for handling/logistics
+ * overrides), and the optional selected AccessoryOption documents.
+ */
+const resolvePricingInputs = async ({ state, stateCode, city, accessoryIds }) => {
+  const [{ rule, isFallback }, locationDoc, selectedAccessories] = await Promise.all([
+    resolveStateRule({ state, stateCode }),
+    city
+      ? Location.findOne({
+          city: new RegExp(`^${city}$`, 'i'),
+          ...(state ? { state: new RegExp(`^${state}$`, 'i') } : {}),
+        }).lean()
+      : Promise.resolve(null),
+    accessoryIds && accessoryIds.length > 0
+      ? AccessoryOption.find({ _id: { $in: accessoryIds }, isActive: true }).lean()
+      : Promise.resolve([]),
+  ]);
+
+  return { rule, isFallback, locationDoc, selectedAccessories };
+};
+
+// Accepts either a real array (JSON body) or a comma-separated string
+// (query param) and normalizes to a clean array of non-empty IDs.
+const parseAccessoryIds = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  return String(raw).split(',').map((s) => s.trim()).filter(Boolean);
+};
+
+const parseLoanRequired = (raw) => raw === true || raw === 'true' || raw === '1';
+
+/**
+ * GET /api/pricing?variantId=...&city=Hyderabad&state=Telangana&stateCode=TG
+ *                  &loanRequired=true&accessoryIds=id1,id2
+ */
+exports.getOnRoadPrice = async (req, res) => {
   try {
-    const { variantId, city, stateCode, includeInsurance = true } = req.body;
+    const { variantId, city, state, stateCode, loanRequired, accessoryIds } = req.query;
 
     if (!variantId) {
       return res.status(400).json({
         success: false,
-        message: 'Variant ID is required',
+        message: 'variantId is required',
       });
     }
-
-    // Get variant details
-    const variant = await Variant.findById(variantId).lean();
-    if (!variant) {
-      return res.status(404).json({
-        success: false,
-        message: 'Variant not found',
-      });
-    }
-
-    // Get ex-showroom price
-    const exShowroomPrice = variant.exShowroomPrice || 0;
-    
-    if (!exShowroomPrice || exShowroomPrice <= 0) {
+    if (!state && !stateCode) {
       return res.status(400).json({
         success: false,
-        message: 'Ex-showroom price not available for this variant',
+        message: 'state or stateCode is required to calculate on-road price',
       });
     }
 
-    // Get model and brand info
-    const model = await Model.findById(variant.modelId).lean();
-    const brand = model ? await Brand.findById(model.brandId).lean() : null;
-
-    // Determine vehicle type and fuel type
-    const vehicleType = model?.bodyType || 'SUV';
-    const fuelType = variant.fuelType || 'Petrol';
-    const isEV = fuelType === 'Electric';
-
-    // If stateCode not provided, try to get from city
-    let finalStateCode = stateCode;
-    if (!finalStateCode && city) {
-      const location = await LocationService.searchLocations(city);
-      if (location && location.length > 0) {
-        finalStateCode = location[0].stateCode;
-      }
+    const variant = await Variant.findById(variantId).lean();
+    if (!variant) {
+      return res.status(404).json({ success: false, message: 'Variant not found' });
+    }
+    if (!variant.exShowroomPrice) {
+      return res.status(422).json({
+        success: false,
+        message: 'This variant has no exShowroomPrice on record',
+      });
     }
 
-    // Default to Maharashtra if no state specified
-    if (!finalStateCode) {
-      finalStateCode = 'MH';
-    }
-
-    // Calculate on-road price
-    const pricing = await PricingEngine.calculateOnRoadPrice({
-      exShowroomPrice,
-      stateCode: finalStateCode,
-      city: city || 'Mumbai',
-      fuelType,
-      vehicleType,
-      isEV,
-      includeInsurance,
+    const { rule, isFallback, locationDoc, selectedAccessories } = await resolvePricingInputs({
+      state,
+      stateCode,
+      city,
+      accessoryIds: parseAccessoryIds(accessoryIds),
     });
 
-    // Get vehicle details
-    const vehicleDetails = {
-      id: variant._id,
-      name: variant.name,
-      model: model?.name || '',
-      brand: brand?.name || '',
-      brandIcon: brand?.icon || '',
-      image: model?.image || '',
+    const pricing = calculateOnRoadPrice({
+      exShowroomPrice: variant.exShowroomPrice,
       fuelType: variant.fuelType,
-      transmission: variant.transmission,
-      engine: variant.engine,
-    };
+      city,
+      state: state || rule.state,
+      stateRule: rule,
+      locationDoc,
+      loanRequired: parseLoanRequired(loanRequired),
+      selectedAccessories,
+    });
 
     return res.status(200).json({
       success: true,
       data: {
-        vehicle: vehicleDetails,
-        pricing: {
-          exShowroomPrice: pricing.exShowroomPrice,
-          roadTax: pricing.roadTax,
-          registrationFee: pricing.registrationFee,
-          insurance: pricing.insurance,
-          greenTax: pricing.greenTax,
-          evSubsidy: pricing.evSubsidy,
-          luxuryTax: pricing.luxuryTax,
-          handlingCharges: pricing.handlingCharges,
-          fastagCharges: pricing.fastagCharges,
-          tcsCharges: pricing.tcsCharges,
-          total: pricing.total,            // ✅ FIX: Injects 'total' key for frontend card lookups
-          totalOnRoadPrice: pricing.total, // Retains fallback compatibility
-        },
-        location: {
-          city: city || 'Mumbai',
-          stateCode: finalStateCode,
-        },
+        variantId,
+        ...pricing,
+        stateRuleUsed: isFallback ? 'national-average-fallback' : rule.state,
       },
     });
   } catch (error) {
-    console.error('❌ Calculate on-road price error:', error);
+    console.error('❌ Get on-road price error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to calculate on-road price',
+      message: 'Failed to calculate on-road price',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-// Calculate on-road price for multiple variants (for comparison)
-exports.calculateMultipleOnRoadPrices = async (req, res) => {
+/**
+ * POST /api/pricing/bulk
+ * Body: { variantIds: [...], city, state, stateCode, loanRequired, accessoryIds }
+ * Used by pages that need on-road price for multiple variants at once
+ * (e.g. Compare Cars) without N separate round trips. loanRequired and
+ * accessoryIds apply uniformly to every variant in the batch.
+ */
+exports.getOnRoadPriceBulk = async (req, res) => {
   try {
-    const { variantIds, city, stateCode } = req.body;
+    const { variantIds, city, state, stateCode, loanRequired, accessoryIds } = req.body;
 
-    if (!variantIds || !Array.isArray(variantIds) || variantIds.length === 0) {
+    if (!Array.isArray(variantIds) || variantIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'At least one variant ID is required',
+        message: 'variantIds must be a non-empty array',
+      });
+    }
+    if (!state && !stateCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'state or stateCode is required to calculate on-road price',
       });
     }
 
-    const results = [];
-    for (const variantId of variantIds) {
-      try {
-        // Get variant details
-        const variant = await Variant.findById(variantId).lean();
-        if (!variant) continue;
+    const [variants, { rule, isFallback, locationDoc, selectedAccessories }] = await Promise.all([
+      Variant.find({ _id: { $in: variantIds } }).lean(),
+      resolvePricingInputs({ state, stateCode, city, accessoryIds: parseAccessoryIds(accessoryIds) }),
+    ]);
 
-        const exShowroomPrice = variant.exShowroomPrice || 0;
-        if (exShowroomPrice <= 0) continue;
-
-        // Get model and brand
-        const model = await Model.findById(variant.modelId).lean();
-        const brand = model ? await Brand.findById(model.brandId).lean() : null;
-
-        const isEV = variant.fuelType === 'Electric';
-        const pricing = await PricingEngine.calculateOnRoadPrice({
-          exShowroomPrice,
-          stateCode: stateCode || 'MH',
-          city: city || 'Mumbai',
-          fuelType: variant.fuelType || 'Petrol',
-          vehicleType: model?.bodyType || 'SUV',
-          isEV,
-        });
-
-        results.push({
-          id: variant._id,
-          name: variant.name,
-          model: model?.name || '',
-          brand: brand?.name || '',
-          brandIcon: brand?.icon || '',
-          image: model?.image || '',
-          exShowroomPrice: pricing.exShowroomPrice,
-          onRoadPrice: pricing.total,
-          pricing: {
-            roadTax: pricing.roadTax,
-            registrationFee: pricing.registrationFee,
-            insurance: pricing.insurance,
-            greenTax: pricing.greenTax,
-            evSubsidy: pricing.evSubsidy,
-            luxuryTax: pricing.luxuryTax,
-            total: pricing.total, // ✅ Ensure total key consistency across multi-pricing
-          },
-        });
-      } catch (err) {
-        console.error(`Failed to calculate price for variant ${variantId}:`, err);
+    const data = variants.map((variant) => {
+      if (!variant.exShowroomPrice) {
+        return { variantId: String(variant._id), error: 'No exShowroomPrice on record' };
       }
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: results,
-    });
-  } catch (error) {
-    console.error('❌ Calculate multiple prices error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to calculate prices',
-    });
-  }
-};
-
-// Get all state pricing rules (admin only)
-exports.getStatePricingRules = async (req, res) => {
-  try {
-    const { stateCode } = req.query;
-    
-    let query = { isActive: true };
-    if (stateCode) {
-      query.stateCode = stateCode.toUpperCase();
-    }
-
-    const rules = await StatePricingRule.find(query).sort({ state: 1 });
-    
-    return res.status(200).json({
-      success: true,
-      data: rules,
-    });
-  } catch (error) {
-    console.error('❌ Get state rules error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get state pricing rules',
-    });
-  }
-};
-
-// Update state pricing rules (admin only)
-exports.updateStatePricingRules = async (req, res) => {
-  try {
-    const { stateCode, rules } = req.body;
-
-    if (!stateCode || !rules) {
-      return res.status(400).json({
-        success: false,
-        message: 'State code and rules are required',
+      const pricing = calculateOnRoadPrice({
+        exShowroomPrice: variant.exShowroomPrice,
+        fuelType: variant.fuelType,
+        city,
+        state: state || rule.state,
+        stateRule: rule,
+        locationDoc,
+        loanRequired: parseLoanRequired(loanRequired),
+        selectedAccessories,
       });
-    }
-
-    const updated = await StatePricingRule.findOneAndUpdate(
-      { stateCode: stateCode.toUpperCase() },
-      { ...rules, updatedAt: new Date() },
-      { upsert: true, new: true }
-    );
-
-    // Clear pricing engine cache
-    PricingEngine.clearCache();
+      return { variantId: String(variant._id), ...pricing };
+    });
 
     return res.status(200).json({
       success: true,
-      message: 'State pricing rules updated successfully',
-      data: updated,
+      stateRuleUsed: isFallback ? 'national-average-fallback' : rule.state,
+      data,
     });
   } catch (error) {
-    console.error('❌ Update state rules error:', error);
+    console.error('❌ Get bulk on-road price error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update state pricing rules',
+      message: 'Failed to calculate on-road prices',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+/**
+ * GET /api/pricing/accessories
+ * Lists the active accessory catalog so the frontend can render checkboxes
+ * (Extended Warranty, RSA, Basic Kit, Accessories Package, ...).
+ */
+exports.getAccessories = async (req, res) => {
+  try {
+    const accessories = await AccessoryOption.find({ isActive: true }).sort({ category: 1, name: 1 }).lean();
+    return res.status(200).json({ success: true, data: accessories });
+  } catch (error) {
+    console.error('❌ Get accessories error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch accessories',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };

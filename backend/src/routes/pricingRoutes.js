@@ -1,20 +1,18 @@
 // backend/src/routes/pricingRoutes.js
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/auth');
 const {
-  calculateOnRoadPrice,
-  calculateMultipleOnRoadPrices,
-  getStatePricingRules,
-  updateStatePricingRules,
+  getOnRoadPrice,
+  getOnRoadPriceBulk,
+  getAccessories,
 } = require('../controllers/pricingController');
 
-// Public routes
-router.post('/calculate', calculateOnRoadPrice);
-router.post('/calculate-multiple', calculateMultipleOnRoadPrices);
-
-// Admin routes
-router.get('/rules', protect, admin, getStatePricingRules);
-router.put('/rules', protect, admin, updateStatePricingRules);
+// IMPORTANT: /accessories must be registered before the '/' GET handler's
+// implicit variantId requirement would otherwise never conflict (this is
+// a distinct path), but keeping it above for readability/route-order
+// clarity as the route list grows.
+router.get('/accessories', getAccessories);
+router.get('/', getOnRoadPrice);
+router.post('/bulk', getOnRoadPriceBulk);
 
 module.exports = router;

@@ -1,22 +1,14 @@
 // backend/src/routes/locationRoutes.js
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
 const {
-  getLocationFromCoords,
+  getCurrentLocation,
   searchLocations,
-  getPopularLocations,
-  saveUserLocation,
-  getUserLocation,
+  getLocationById,
 } = require('../controllers/locationController');
 
-// Public routes
-router.get('/reverse-geocode', getLocationFromCoords);
+router.get('/current', getCurrentLocation);
 router.get('/search', searchLocations);
-router.get('/popular', getPopularLocations);
-
-// Protected routes
-router.post('/save', protect, saveUserLocation);
-router.get('/user', protect, getUserLocation);
+router.get('/:id', getLocationById);
 
 module.exports = router;

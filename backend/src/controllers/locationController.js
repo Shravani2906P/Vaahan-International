@@ -1,155 +1,157 @@
 // backend/src/controllers/locationController.js
-const LocationService = require('../services/locationService');
-const PricingEngine = require('../services/pricing');
-const User = require('../models/User');
-const Variant = require('../models/Variant');
+/*
+================================================================================
+File Name : locationController.js
+Description : India-only location endpoints.
+                - GET /api/location/current  -> reverse geocode via OpenCage
+                - GET /api/location/search   -> local Mongo search (no
+                  external API calls, so it's safe to hit on every keystroke
+                  from the frontend, which itself debounces the calls)
+Company : Vaahan International
+Copyright : (c) 2026 Vaahan International. All rights reserved.
+================================================================================
+*/
 
-// Get current location from coordinates (reverse geocode)
-exports.getLocationFromCoords = async (req, res) => {
+const Location = require('../models/Location');
+const { reverseGeocode } = require('../services/geocodingService');
+
+/**
+ * GET /api/location/current?lat=..&lng=..
+ * Reverse geocodes a browser-supplied coordinate. India-only — anything
+ * else returns a clear, user-facing message instead of a location.
+ */
+exports.getCurrentLocation = async (req, res) => {
   try {
-    const { lat, lng } = req.query;
+    const lat = parseFloat(req.query.lat);
+    const lng = parseFloat(req.query.lng);
 
-    if (!lat || !lng) {
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
       return res.status(400).json({
         success: false,
-        message: 'Latitude and longitude are required',
+        message: 'Valid lat and lng query parameters are required',
       });
     }
 
-    const location = await LocationService.reverseGeocode(
-      parseFloat(lat),
-      parseFloat(lng)
-    );
+    const geo = await reverseGeocode(lat, lng);
+
+    if (!geo.isIndia) {
+      return res.status(200).json({
+        success: false,
+        outsideIndia: true,
+        message: 'This feature is currently available only in India.',
+      });
+    }
+
+    // Best-effort: if we already have this city seeded locally, prefer its
+    // canonical stateCode (matches StatePricingRule exactly) over whatever
+    // OpenCage's state_code returned, since seeded data is our source of
+    // truth for pricing lookups.
+    let stateCode = geo.stateCode;
+    if (geo.city && geo.state) {
+      const localMatch = await Location.findOne({
+        city: new RegExp(`^${geo.city}$`, 'i'),
+        state: new RegExp(`^${geo.state}$`, 'i'),
+      }).lean();
+      if (localMatch) stateCode = localMatch.stateCode;
+    }
 
     return res.status(200).json({
       success: true,
-      data: location,
+      data: {
+        city: geo.city,
+        district: geo.district,
+        state: geo.state,
+        stateCode,
+        pincode: geo.pincode,
+        country: geo.country,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
+      },
     });
   } catch (error) {
-    console.error('❌ Reverse geocode error:', error);
+    console.error('❌ Get current location error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to get location',
+      message: 'Failed to determine current location',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-// Search locations
+/**
+ * GET /api/location/search?q=hyd&limit=10
+ * Local, DB-only partial search across city / district / state / aliases.
+ * No external API calls — safe for instant, debounced, keystroke-driven
+ * search on the frontend.
+ */
 exports.searchLocations = async (req, res) => {
   try {
     const { q } = req.query;
-    
-    if (!q || q.length < 1) {
-      return res.status(400).json({
-        success: false,
-        message: 'Search query is required',
-      });
+    const limit = Math.min(parseInt(req.query.limit, 10) || 15, 30);
+
+    if (!q || q.trim().length < 1) {
+      return res.status(200).json({ success: true, data: [] });
     }
 
-    const locations = await LocationService.searchLocations(q);
-    
+    const query = q.trim();
+    // Escape regex special characters from free-form user input.
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'i');
+
+    // Match against searchText (fast path — one indexed field) OR
+    // directly against city/district/state/aliases as a fallback. The
+    // fallback means search still works even for a document whose
+    // searchText wasn't populated correctly (e.g. inserted by a script or
+    // admin tool that bypassed the model's pre-validate hook) — this bit
+    // us once already, so the search endpoint no longer trusts searchText
+    // alone.
+    const results = await Location.find({
+      $or: [
+        { searchText: regex },
+        { city: regex },
+        { district: regex },
+        { state: regex },
+        { aliases: regex },
+      ],
+    })
+      .sort({ popularity: -1, city: 1 })
+      .limit(limit)
+      .lean();
+
     return res.status(200).json({
       success: true,
-      data: locations,
+      count: results.length,
+      data: results,
     });
   } catch (error) {
     console.error('❌ Search locations error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to search locations',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };
 
-// Get popular locations
-exports.getPopularLocations = async (req, res) => {
+/**
+ * GET /api/location/:id
+ * Fetch a single seeded location by its Mongo ID — used when the frontend
+ * needs to re-hydrate a saved location (e.g. from a user profile) into
+ * full detail.
+ */
+exports.getLocationById = async (req, res) => {
   try {
-    const locations = await LocationService.getPopularLocations(10);
-    
-    return res.status(200).json({
-      success: true,
-      data: locations,
-    });
+    const location = await Location.findById(req.params.id).lean();
+    if (!location) {
+      return res.status(404).json({ success: false, message: 'Location not found' });
+    }
+    return res.status(200).json({ success: true, data: location });
   } catch (error) {
-    console.error('❌ Get popular locations error:', error);
+    console.error('❌ Get location by ID error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch popular locations',
-    });
-  }
-};
-
-// Save user location (when logged in)
-exports.saveUserLocation = async (req, res) => {
-  try {
-    const userId = req.userId;
-    const locationData = req.body;
-
-    if (!locationData.city || !locationData.state) {
-      return res.status(400).json({
-        success: false,
-        message: 'City and state are required',
-      });
-    }
-
-    // Update user with selected location
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        selectedLocation: {
-          city: locationData.city,
-          district: locationData.district,
-          state: locationData.state,
-          stateCode: locationData.stateCode,
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          pincode: locationData.pincode,
-          locationUpdatedAt: new Date(),
-        },
-      },
-      { new: true }
-    );
-
-    // Increment location popularity
-    if (locationData._id) {
-      await LocationService.incrementPopularity(locationData._id);
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Location saved successfully',
-      data: user.selectedLocation,
-    });
-  } catch (error) {
-    console.error('❌ Save location error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to save location',
-    });
-  }
-};
-
-// Get current user location (from profile)
-exports.getUserLocation = async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-    
-    if (!user || !user.selectedLocation) {
-      return res.status(404).json({
-        success: false,
-        message: 'No location found for user',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: user.selectedLocation,
-    });
-  } catch (error) {
-    console.error('❌ Get user location error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to get user location',
+      message: 'Failed to fetch location',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 };

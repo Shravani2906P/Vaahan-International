@@ -74,52 +74,71 @@ class RatingService {
     return results;
   }
   
-  compareCars(car1Data, car2Data, benchmarks) {
+  compareCars(car1Data, car2Data, benchmarks, car3Data = null) {
     const car1Ratings = this.calculateMultipleRatings(car1Data, benchmarks);
     const car2Ratings = this.calculateMultipleRatings(car2Data, benchmarks);
-    
-    let car1Wins = 0, car2Wins = 0, ties = 0;
-    
+    const car3Ratings = car3Data ? this.calculateMultipleRatings(car3Data, benchmarks) : null;
+
+    const wins = { car1Wins: 0, car2Wins: 0, car3Wins: 0, ties: 0 };
+
     Object.keys(car1Ratings).forEach(key => {
-      const r1 = car1Ratings[key];
-      const r2 = car2Ratings[key];
-      if (r1.rating !== null && r2.rating !== null) {
-        if (r1.rating > r2.rating) car1Wins++;
-        else if (r2.rating > r1.rating) car2Wins++;
-        else ties++;
+      const contenders = [
+        { slot: 'car1Wins', rating: car1Ratings[key].rating },
+        { slot: 'car2Wins', rating: car2Ratings[key].rating },
+      ];
+      if (car3Ratings) {
+        contenders.push({ slot: 'car3Wins', rating: car3Ratings[key].rating });
+      }
+
+      const withRatings = contenders.filter(c => c.rating !== null);
+      if (withRatings.length < 2) return; // need at least 2 comparable ratings for this row to count
+
+      const maxRating = Math.max(...withRatings.map(c => c.rating));
+      const topContenders = withRatings.filter(c => c.rating === maxRating);
+
+      if (topContenders.length > 1) {
+        wins.ties++;
+      } else {
+        wins[topContenders[0].slot]++;
       }
     });
-    
-    return {
-      car1: {
-        id: car1Data._id,
-        name: car1Data.name,
-        model: car1Data.modelName,
-        brand: car1Data.brandName,
-        price: car1Data.price,
-        image: car1Data.image,
-        brandIcon: car1Data.brandIcon,
-        overallScore: car1Data.overallScore || null,
-        ratings: car1Ratings,
-      },
-      car2: {
-        id: car2Data._id,
-        name: car2Data.name,
-        model: car2Data.modelName,
-        brand: car2Data.brandName,
-        price: car2Data.price,
-        image: car2Data.image,
-        brandIcon: car2Data.brandIcon,
-        overallScore: car2Data.overallScore || null,
-        ratings: car2Ratings,
-      },
+
+    const buildCarOutput = (data, ratings) => ({
+      id: data._id,
+      name: data.name,
+      model: data.modelName,
+      brand: data.brandName,
+      price: data.price,
+      image: data.image,
+      brandIcon: data.brandIcon,
+      overallScore: data.overallScore || null,
+      ratings,
+    });
+
+    const winCounts = car3Ratings
+      ? { car1: wins.car1Wins, car2: wins.car2Wins, car3: wins.car3Wins }
+      : { car1: wins.car1Wins, car2: wins.car2Wins };
+    const maxWinCount = Math.max(...Object.values(winCounts));
+    const topWinners = Object.keys(winCounts).filter(slot => winCounts[slot] === maxWinCount);
+    const overallWinner = maxWinCount === 0 || topWinners.length > 1 ? 'tie' : topWinners[0];
+
+    const result = {
+      car1: buildCarOutput(car1Data, car1Ratings),
+      car2: buildCarOutput(car2Data, car2Ratings),
       summary: {
-        car1Wins,
-        car2Wins,
-        ties,
-        overallWinner: car1Wins > car2Wins ? 'car1' : car2Wins > car1Wins ? 'car2' : 'tie',
+        car1Wins: wins.car1Wins,
+        car2Wins: wins.car2Wins,
+        ...(car3Ratings ? { car3Wins: wins.car3Wins } : {}),
+        ties: wins.ties,
+        overallWinner,
       },
     };
+
+    if (car3Ratings) {
+      result.car3 = buildCarOutput(car3Data, car3Ratings);
+    }
+
+    return result;
   }
   
   getColorForRating(rating) {

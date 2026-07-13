@@ -12,6 +12,7 @@ const {
   verifyPhone,
   confirmPhoneVerification,
   adminLogin,
+  updateLocation,
 } = require('../controllers/authController');
 
 // Auth routes
@@ -28,5 +29,8 @@ router.post('/confirm-phone', protect, confirmPhoneVerification);
 // Profile routes
 router.put('/complete-profile', protect, completeProfile);
 router.get('/me', protect, getCurrentUser);
+
+// Location routes (saved to MongoDB profile for logged-in users)
+router.put('/location', protect, updateLocation);
 
 module.exports = router;
