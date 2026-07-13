@@ -17,6 +17,8 @@ const Brand = require('../models/Brand');
 const Benchmark = require('../models/Benchmark');
 const RatingService = require('../services/ratingService');
 const mongoose = require('mongoose');
+const { calculateOnRoadPrice } = require('../services/pricing/calculator');
+const { resolveStateRule } = require('../services/pricing/stateRuleResolver');
 
 /**
  * Helper to check if string is valid MongoDB ObjectID
@@ -32,8 +34,11 @@ const isValidObjectId = (id) => {
  */
 const findVariantByAnyId = async (id) => {
   try {
+    console.log(`🔍 [compare debug] Looking up variant for id="${id}" (type: ${typeof id}, validObjectId: ${isValidObjectId(id)})`);
+
     if (isValidObjectId(id)) {
       const variant = await Variant.findById(id).lean();
+      console.log(`🔍 [compare debug] Variant.findById("${id}") ->`, variant ? `FOUND (${variant.name})` : 'NOT FOUND');
       if (variant) return variant;
     }
     
@@ -49,6 +54,8 @@ const findVariantByAnyId = async (id) => {
       const variants = await Variant.find({ 
         name: { $regex: new RegExp(`^${variantName}$`, 'i') } 
       }).lean();
+
+      console.log(`🔍 [compare debug] Fallback name search for "${variantName}" -> ${variants.length} candidate(s)`);
 
       if (variants.length === 0) return null;
 
@@ -111,11 +118,11 @@ const extractSpecNumeric = (value) => {
 };
 
 /**
- * Compare two cars
+ * Compare two (or optionally three) cars
  */
 exports.compareCars = async (req, res) => {
   try {
-    const { car1Id, car2Id } = req.body;
+    const { car1Id, car2Id, car3Id, city, state, stateCode } = req.body;
     
     if (!car1Id || !car2Id) {
       return res.status(400).json({
@@ -124,28 +131,31 @@ exports.compareCars = async (req, res) => {
       });
     }
     
-    // Run both lookups in parallel instead of one-after-another
-    const [car1, car2] = await Promise.all([
+    // Run all lookups in parallel instead of one-after-another
+    const [car1, car2, car3] = await Promise.all([
       findVariantByAnyId(car1Id),
       findVariantByAnyId(car2Id),
+      car3Id ? findVariantByAnyId(car3Id) : Promise.resolve(null),
     ]);
     
-    if (!car1 || !car2) {
-      console.log('❌ Car1 found:', !!car1, 'Car2 found:', !!car2);
+    if (!car1 || !car2 || (car3Id && !car3)) {
+      console.log('❌ Car1 found:', !!car1, 'Car2 found:', !!car2, car3Id ? `Car3 found: ${!!car3}` : '');
       return res.status(404).json({
         success: false,
-        message: `One or both cars not found. Car1: ${!!car1}, Car2: ${!!car2}`,
+        message: `One or more cars not found. Car1: ${!!car1}, Car2: ${!!car2}${car3Id ? `, Car3: ${!!car3}` : ''}`,
       });
     }
     
     // Fetch models, then brands + benchmarks, each batch in parallel
-    const [model1, model2] = await Promise.all([
+    const [model1, model2, model3] = await Promise.all([
       Model.findById(car1.modelId).lean(),
       Model.findById(car2.modelId).lean(),
+      car3 ? Model.findById(car3.modelId).lean() : Promise.resolve(null),
     ]);
-    const [brand1, brand2, benchmarks] = await Promise.all([
+    const [brand1, brand2, brand3, benchmarks] = await Promise.all([
       Brand.findById(model1.brandId).lean(),
       Brand.findById(model2.brandId).lean(),
+      model3 ? Brand.findById(model3.brandId).lean() : Promise.resolve(null),
       Benchmark.find({ isActive: true }).lean(),
     ]);
     
@@ -171,6 +181,12 @@ exports.compareCars = async (req, res) => {
     const bootSpace2 = getSpecValue(specs2, 'bootSpace');
     const groundClearance2 = getSpecValue(specs2, 'groundClearance');
     const turningRadius2 = getSpecValue(specs2, 'turningRadius');
+
+    // For Car 3 (optional)
+    const specs3 = car3?.specifications || {};
+    const bootSpace3 = getSpecValue(specs3, 'bootSpace');
+    const groundClearance3 = getSpecValue(specs3, 'groundClearance');
+    const turningRadius3 = getSpecValue(specs3, 'turningRadius');
     
     // console.log('🔍 Car1 Specifications:', {
     //   bootSpace: bootSpace1,
@@ -184,6 +200,36 @@ exports.compareCars = async (req, res) => {
     //   turningRadius: turningRadius2,
     // });
     
+    // ========================================
+    // Dynamic On-Road Price (location-aware)
+    // ========================================
+    // Only computed when the client supplied a location — Compare Cars
+    // sends this once a global location is selected. No onRoadPrice is
+    // ever read from the database; it's derived fresh from
+    // exShowroomPrice + the caller's state rules every time.
+    let onRoadPriceByCar = { car1: null, car2: null, car3: null };
+    if (state || stateCode) {
+      const { rule, isFallback } = await resolveStateRule({ state, stateCode });
+      const buildOnRoad = (variant) => {
+        if (!variant || !variant.exShowroomPrice) return null;
+        return {
+          ...calculateOnRoadPrice({
+            exShowroomPrice: variant.exShowroomPrice,
+            fuelType: variant.fuelType,
+            city,
+            state: state || rule.state,
+            stateRule: rule,
+          }),
+          stateRuleUsed: isFallback ? 'national-average-fallback' : rule.state,
+        };
+      };
+      onRoadPriceByCar = {
+        car1: buildOnRoad(car1),
+        car2: buildOnRoad(car2),
+        car3: buildOnRoad(car3),
+      };
+    }
+
     const car1Data = {
       _id: car1._id,
       name: car1.name,
@@ -192,6 +238,8 @@ exports.compareCars = async (req, res) => {
       brandIcon: brand1.icon,
       price: car1.price,
       exShowroomPrice: car1.exShowroomPrice,
+      fuelType: car1.fuelType,
+      onRoadPricing: onRoadPriceByCar.car1,
       image: model1.image,
       overallScore: car1.overallScore,
       torqueNumeric: car1.torqueNumeric || extractNumeric(car1.torque),
@@ -216,6 +264,8 @@ exports.compareCars = async (req, res) => {
       brandIcon: brand2.icon,
       price: car2.price,
       exShowroomPrice: car2.exShowroomPrice,
+      fuelType: car2.fuelType,
+      onRoadPricing: onRoadPriceByCar.car2,
       image: model2.image,
       overallScore: car2.overallScore,
       torqueNumeric: car2.torqueNumeric || extractNumeric(car2.torque),
@@ -230,9 +280,44 @@ exports.compareCars = async (req, res) => {
       scores: car2.scores || {},
       factorScores: car2.factorScores || {},
     };
+
+    // Car 3 is optional — CarDekho-style 3-way compare
+    const car3Data = car3 ? {
+      _id: car3._id,
+      name: car3.name,
+      modelName: model3.name,
+      brandName: brand3.name,
+      brandIcon: brand3.icon,
+      price: car3.price,
+      exShowroomPrice: car3.exShowroomPrice,
+      fuelType: car3.fuelType,
+      onRoadPricing: onRoadPriceByCar.car3,
+      image: model3.image,
+      overallScore: car3.overallScore,
+      torqueNumeric: car3.torqueNumeric || extractNumeric(car3.torque),
+      powerNumeric: car3.powerNumeric || extractNumeric(car3.power),
+      mileageNumeric: car3.mileageNumeric || extractNumeric(car3.mileage),
+      specifications: {
+        bootSpace: bootSpace3,
+        groundClearance: groundClearance3,
+        turningRadius: turningRadius3,
+        ...specs3,
+      },
+      scores: car3.scores || {},
+      factorScores: car3.factorScores || {},
+    } : null;
     
     // Calculate comparison
-    const comparison = RatingService.compareCars(car1Data, car2Data, benchmarks);
+    const comparison = RatingService.compareCars(car1Data, car2Data, benchmarks, car3Data);
+
+    // Defensive: RatingService may only copy a known whitelist of fields
+    // onto its own car1/car2/car3 output objects. Re-attach onRoadPricing
+    // here so it reaches the client regardless of what RatingService does
+    // internally — the pricing engine's output must never depend on
+    // rating logic being aware of it.
+    if (comparison?.car1) comparison.car1.onRoadPricing = onRoadPriceByCar.car1;
+    if (comparison?.car2) comparison.car2.onRoadPricing = onRoadPriceByCar.car2;
+    if (comparison?.car3) comparison.car3.onRoadPricing = onRoadPriceByCar.car3;
     
     res.status(200).json({
       success: true,

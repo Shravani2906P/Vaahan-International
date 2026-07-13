@@ -1,36 +1,27 @@
 // backend/src/services/pricing/insuranceService.js
-class InsuranceService {
-  calculate({ exShowroomPrice, rules, fuelType, vehicleType }) {
-    if (!rules) return 0;
+/*
+================================================================================
+File Name : insuranceService.js
+Description : Estimates 1-year comprehensive insurance premium as a
+              percentage of ex-showroom price, with a state-configurable
+              minimum premium floor.
+================================================================================
+*/
 
-    let baseInsurance = 0;
+/**
+ * @param {Object} params
+ * @param {number} params.exShowroomPrice
+ * @param {Object} params.stateRule - a StatePricingRule document (lean)
+ * @returns {{ amount: number, ratePercent: number }}
+ */
+const calculateInsurance = ({ exShowroomPrice, stateRule }) => {
+  const ratePercent = stateRule?.insurance?.comprehensiveRatePercent ?? 4;
+  const minPremium = stateRule?.insurance?.minPremium ?? 8000;
 
-    // Calculate base insurance
-    if (rules.baseRate) {
-      baseInsurance = exShowroomPrice * rules.baseRate;
-    }
+  const estimated = Math.round((exShowroomPrice * ratePercent) / 100);
+  const amount = Math.max(estimated, minPremium);
 
-    // Apply min and max limits
-    if (rules.minAmount && baseInsurance < rules.minAmount) {
-      baseInsurance = rules.minAmount;
-    }
-    if (rules.maxAmount && baseInsurance > rules.maxAmount) {
-      baseInsurance = rules.maxAmount;
-    }
+  return { amount, ratePercent };
+};
 
-    // Add-ons (optional)
-    let addons = 0;
-    if (rules.addons) {
-      const addonRates = rules.addons;
-      for (const [key, rate] of Object.entries(addonRates)) {
-        if (rate > 0) {
-          addons += exShowroomPrice * rate;
-        }
-      }
-    }
-
-    return baseInsurance + addons;
-  }
-}
-
-module.exports = InsuranceService;
+module.exports = { calculateInsurance };

@@ -55,20 +55,27 @@ const UserSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
   },
+  // ========================================
+  // Saved Location (Zomato-style global location)
+  // ========================================
+  // Mirrors what's stored client-side in localStorage under
+  // `locationContext`, so a logged-in user's location follows them across
+  // devices instead of only persisting per-browser.
+  savedLocation: {
+    city: { type: String, trim: true },
+    district: { type: String, trim: true },
+    state: { type: String, trim: true },
+    stateCode: { type: String, trim: true, uppercase: true },
+    pincode: { type: String, trim: true },
+    country: { type: String, trim: true, default: 'India' },
+    latitude: { type: Number },
+    longitude: { type: Number },
+    updatedAt: { type: Date },
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  selectedLocation: {
-  city: { type: String, trim: true },
-  district: { type: String, trim: true },
-  state: { type: String, trim: true },
-  stateCode: { type: String, uppercase: true, trim: true },
-  latitude: { type: Number },
-  longitude: { type: Number },
-  pincode: { type: String, trim: true },
-  locationUpdatedAt: { type: Date },
-},
 });
 
 module.exports = mongoose.model('User', UserSchema);

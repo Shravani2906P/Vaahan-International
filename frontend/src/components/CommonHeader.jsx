@@ -4,7 +4,8 @@
 File Name : CommonHeader.jsx
 Author : Tahseen Raza
 Created Date : 2025-01-15
-Description : Optimized header component with AuthModal integration and dynamic logo
+Description : Optimized header component with AuthModal integration, dynamic logo,
+              functional SearchBar, and CarDekho style two-row premium layout.
 Company : Vaahan International
 Copyright : (c) 2026 Vaahan International. All rights reserved.
 ================================================================================
@@ -15,8 +16,9 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ThemeToggle from './ThemeToggle'
 import AuthModal from './AuthModal'
+import LocationBadge from './location/LocationBadge'
+import SearchBar from './SearchBar' // Integrated functional SearchBar
 import { useTheme } from '../context/ThemeContext'
-import { useLocation as useLocationContext } from '../context/LocationContext'
 import { api } from '../services/api'
 
 // Static category data
@@ -59,8 +61,12 @@ const MOBILE_CATEGORIES = [
   ...DESKTOP_CATEGORIES.map(({ name, path }) => ({ name, path }))
 ]
 
+// Updated to match the specific CarDekho layout links
 const NAV_LINKS = [
-  { path: '/', name: 'Home' },
+  // { path: '/', name: 'New Cars' },
+  // { path: '/compare-cars', name: 'Compare Cars' },
+  // { path: '/articles', name: 'Articles' },
+  // { path: '/travelogues', name: 'Travelogues' },
   { path: '/about', name: 'About' },
   { path: '/contact', name: 'Contact' },
 ]
@@ -72,9 +78,6 @@ const CommonHeader = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const location = useLocation()
   const { isDark } = useTheme()
-  
-  // Location context
-  const { location: userLocation, openLocationModal, isLoading: locationLoading } = useLocationContext()
 
   // State for hiding header when sticky comparison appears
   const [hideHeader, setHideHeader] = useState(false)
@@ -92,13 +95,14 @@ const CommonHeader = () => {
   // Dropdown ref for click outside
   const dropdownRef = useRef(null)
 
-  // Ref to the <nav> element itself
+  // Ref to the <nav> element itself — used to publish its real, live rendered
+  // height as a CSS variable so other components can clear it.
   const navRef = useRef(null)
 
   // Memoized values
   const brandColor = useMemo(() => isDark ? '#0f172a' : '#ffffff', [isDark])
 
-  // Publish the nav's real height as a CSS variable
+  // Publish the nav's real, live rendered height as a CSS variable on <html>.
   useEffect(() => {
     const el = navRef.current
     if (!el) return
@@ -194,14 +198,8 @@ const CommonHeader = () => {
   }, [location.pathname])
 
   // Toggle functions
-  const toggleMenu = useCallback(() => {
-    setIsOpen(prev => !prev)
-  }, [])
-
-  const toggleCategories = useCallback(() => {
-    setIsCategoriesOpen(prev => !prev)
-  }, [])
-
+  const toggleMenu = useCallback(() => setIsOpen(prev => !prev), [])
+  const toggleCategories = useCallback(() => setIsCategoriesOpen(prev => !prev), [])
   const closeMenu = useCallback(() => {
     setIsOpen(false)
     setIsCategoriesOpen(false)
@@ -222,17 +220,13 @@ const CommonHeader = () => {
   // Close auth modal and refresh user
   const closeAuthModal = useCallback(async () => {
     setIsAuthModalOpen(false)
-    setTimeout(() => {
-      setActiveTriggerRef(null)
-    }, 500)
+    setTimeout(() => setActiveTriggerRef(null), 500)
 
     const token = localStorage.getItem('token')
     if (token) {
       try {
         const result = await api.getCurrentUser(token)
-        if (result.success) {
-          setUser(result.user)
-        }
+        if (result.success) setUser(result.user)
       } catch (error) {
         console.error('Error fetching user:', error)
       }
@@ -246,12 +240,9 @@ const CommonHeader = () => {
     setIsDropdownOpen(false)
   }, [])
 
-  // Toggle dropdown
-  const toggleDropdown = useCallback(() => {
-    setIsDropdownOpen(prev => !prev)
-  }, [])
+  const toggleDropdown = useCallback(() => setIsDropdownOpen(prev => !prev), [])
 
-  // Desktop Categories Dropdown
+  // Desktop Categories Dropdown UI Update
   const CategoriesDropdown = useCallback(() => {
     const [isCatOpen, setIsCatOpen] = useState(false)
     const timeoutRef = useRef(null)
@@ -263,9 +254,7 @@ const CommonHeader = () => {
     }
 
     const handleMouseLeave = () => {
-      timeoutRef.current = setTimeout(() => {
-        setIsCatOpen(false)
-      }, 200)
+      timeoutRef.current = setTimeout(() => setIsCatOpen(false), 200)
     }
 
     useEffect(() => {
@@ -286,48 +275,50 @@ const CommonHeader = () => {
 
     const catTextColor = isDark ? 'text-white' : 'text-gray-900'
     const catSubTextColor = isDark ? 'text-gray-400' : 'text-gray-500'
-    const catHoverBg = isDark ? 'hover:bg-dark-700' : 'hover:bg-gray-100'
+    const catHoverBg = isDark ? 'hover:bg-dark-700' : 'hover:bg-gray-50'
     const catBorderColor = isDark ? 'border-dark-700' : 'border-gray-100'
     const catBgColor = isDark ? 'bg-dark-800' : 'bg-white'
-    const catHoverText = isDark ? 'hover:text-yellow-400' : 'hover:text-gray-700'
+    
+    // Active style match
+    const catHoverText = 'hover:text-[#F97316]'
 
     return (
       <div
-        className="relative inline-block"
+        className="relative inline-block h-full flex items-center"
         ref={dropdownRef}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <button className={`flex items-center gap-1 font-semibold text-sm xl:text-[16px] tracking-wide transition-colors duration-300 ${catTextColor} ${catHoverText}`}>
+        <button className={`flex items-center gap-1 font-semibold text-[15px] xl:text-[16px] tracking-wide transition-colors duration-200 h-full border-b-[3px] border-transparent ${catTextColor} ${catHoverText}`}>
           Categories
-          <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-150 ${isCatOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-200 ${isCatOpen ? 'rotate-180 text-[#F97316]' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
         {isCatOpen && (
           <div
-            className={`absolute top-full left-0 mt-1 w-56 sm:w-64 md:w-72 rounded-lg shadow-xl border ${catBorderColor} z-50 ${catBgColor}`}
+            className={`absolute top-[calc(100%-2px)] left-0 mt-0 w-64 rounded-xl shadow-xl border ${catBorderColor} z-50 ${catBgColor} overflow-hidden`}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
             <Link
               to="/compare-cars"
-              className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor}`}
+              className={`flex items-center justify-between px-4 py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor}`}
               onClick={() => setIsCatOpen(false)}
             >
               <div>
                 <div className={`font-bold text-sm sm:text-base ${catTextColor}`}>Compare Cars</div>
-                <div className={`text-[10px] sm:text-xs ${catSubTextColor}`}>Side by side comparison</div>
+                <div className={`text-[11px] sm:text-xs ${catSubTextColor}`}>Side by side comparison</div>
               </div>
-              <span className="text-yellow-500 text-xs sm:text-sm">→</span>
+              <span className="text-[#F97316] text-sm">→</span>
             </Link>
 
             {DESKTOP_CATEGORIES.map((category, idx) => (
               <Link
                 key={idx}
                 to={category.path}
-                className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor} last:border-0`}
+                className={`flex items-center justify-between px-4 py-3 ${catHoverBg} transition-colors duration-200 border-b ${catBorderColor} last:border-0`}
                 onClick={() => setIsCatOpen(false)}
               >
                 <div>
@@ -335,7 +326,7 @@ const CommonHeader = () => {
                     {category.name}
                   </div>
                 </div>
-                <span className="text-yellow-500 text-xs sm:text-sm">→</span>
+                <span className="text-[#F97316] text-sm opacity-0 group-hover:opacity-100 transition-opacity">→</span>
               </Link>
             ))}
           </div>
@@ -344,428 +335,307 @@ const CommonHeader = () => {
     )
   }, [isDark])
 
-  // Consistent text classes
-  const navLinkClasses = `font-semibold text-sm xl:text-[16px] tracking-wide transition-colors duration-300`
-  const navLinkActiveClasses = isDark
-    ? 'text-yellow-400 border-b-2 border-yellow-400 pb-1'
-    : 'text-gray-900 border-b-2 border-gray-900 pb-1'
-  const navLinkInactiveClasses = isDark ? 'text-white hover:text-yellow-400' : 'text-gray-900 hover:text-gray-700'
+  // Active / Inactive states matching CarDekho (Orange hover/underline)
+  const navLinkClasses = `h-full flex items-center font-semibold text-[15px] xl:text-[16px] tracking-wide transition-all duration-200 border-b-[3px] pt-[3px]`
+  const navLinkActiveClasses = 'text-[#F97316] border-[#F97316]'
+  const navLinkInactiveClasses = isDark 
+    ? 'text-white hover:text-[#F97316] border-transparent' 
+    : 'text-gray-900 hover:text-[#F97316] border-transparent'
 
-  const mobileNavLinkClasses = `block py-2 font-medium text-base sm:text-lg transition-colors duration-300`
-  const mobileNavLinkActiveClasses = isDark ? 'text-yellow-400' : 'text-gray-900 font-bold'
-  const mobileNavLinkInactiveClasses = isDark ? 'text-white hover:text-yellow-400' : 'text-gray-900 hover:text-gray-700'
+  const mobileNavLinkClasses = `block py-2.5 font-medium text-base sm:text-lg transition-colors duration-200`
+  const mobileNavLinkActiveClasses = 'text-[#F97316] font-bold'
+  const mobileNavLinkInactiveClasses = isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'
 
   const getUserInitials = () => {
     if (!user) return '?'
-    if (user.firstName && user.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    }
-    if (user.firstName) {
-      return user.firstName[0].toUpperCase()
-    }
-    if (user.email) {
-      return user.email[0].toUpperCase()
-    }
+    if (user.firstName && user.lastName) return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    if (user.firstName) return user.firstName[0].toUpperCase()
+    if (user.email) return user.email[0].toUpperCase()
     return '?'
-  }
-
-  const getUserName = () => {
-    if (!user) return 'User'
-    if (user.firstName && user.lastName) {
-      return `${user.firstName} ${user.lastName}`
-    }
-    if (user.firstName) {
-      return user.firstName
-    }
-    if (user.username) {
-      return user.username
-    }
-    return user.email?.split('@')[0] || 'User'
-  }
-
-  // Location button component (reused for desktop and mobile)
-  const LocationButton = ({ isMobile = false }) => {
-    // Show loading state or "Select Location" if no location
-    if (locationLoading) {
-      return (
-        <button 
-          onClick={openLocationModal} 
-          className={`flex items-center gap-2 ${isMobile ? 'px-3 py-2 w-full' : 'px-3 py-1.5'} rounded-lg transition-colors duration-200 ${
-            isDark ? 'bg-dark-700 text-gray-400' : 'bg-gray-100 text-gray-500'
-          }`}
-        >
-          <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm">Loading...</span>
-        </button>
-      )
-    }
-
-    if (!userLocation) {
-      return (
-        <button 
-          onClick={openLocationModal} 
-          className={`flex items-center gap-2 ${isMobile ? 'px-3 py-2 w-full' : 'px-3 py-1.5'} rounded-lg transition-colors duration-200 ${
-            isDark ? 'bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400' : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700'
-          } font-medium`}
-        >
-          <svg className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span className="text-sm font-medium">Select Location</span>
-        </button>
-      )
-    }
-
-    const displayName = userLocation.city || userLocation.district || userLocation.state || 'Location'
-
-    return (
-      <button 
-        onClick={openLocationModal} 
-        className={`flex items-center gap-1.5 ${isMobile ? 'px-3 py-2 w-full' : 'px-3 py-1.5'} rounded-lg transition-colors duration-200 ${
-          isDark ? 'bg-dark-700 hover:bg-dark-600 text-gray-300' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-        }`}
-      >
-        <svg className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} text-yellow-500 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <span className={`${isMobile ? 'text-sm' : 'text-sm'} font-medium truncate max-w-[100px] sm:max-w-[120px]`}>
-          {displayName}
-        </span>
-        <svg className={`${isMobile ? 'w-4 h-4' : 'w-3 h-3'} text-gray-400 flex-shrink-0`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-    )
   }
 
   return (
     <>
       <nav
         ref={navRef}
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
           hideHeader ? 'opacity-0 -translate-y-full pointer-events-none' : 'opacity-100 translate-y-0'
         }`}
         style={{
           backgroundColor: brandColor,
-          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-          paddingTop: isScrolled ? '0.5rem' : '0.75rem',
-          paddingBottom: isScrolled ? '0.5rem' : '0.75rem',
-          boxShadow: isScrolled ? '0 4px 20px rgba(0,0,0,0.15)' : 'none'
+          boxShadow: isScrolled ? (isDark ? '0 4px 20px rgba(0,0,0,0.5)' : '0 4px 15px rgba(0,0,0,0.05)') : 'none'
         }}
       >
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link to="/" className="flex items-center group flex-shrink-0">
-              <img
-                src={isDark ? "/DSLogo-Dark4.png" : "/DSLogo2.png"}
-                alt="Vaahan International"
-                className="h-12 sm:h-14 md:h-16 lg:h-18 w-auto object-contain transition-transform duration-150 group-hover:scale-105"
-                style={{ maxWidth: '200px' }}
-              />
-            </Link>
+        {/* ===============================
+            TOP ROW: Logo, Search, Actions
+            =============================== */}
+        <div className={`border-b ${isDark ? 'border-white/10' : 'border-gray-100'}`}>
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[72px] lg:h-[80px]">
+              
+              {/* Logo */}
+              <Link to="/" className="flex items-center group flex-shrink-0">
+                <img
+                  src={isDark ? "/DSLogo-Dark4.png" : "/DSLogo2.png"}
+                  alt="Vaahan International"
+                  className="h-14 sm:h-16 lg:h-[60px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxWidth: '220px' }}
+                />
+              </Link>
 
-            {/* Desktop Navigation - Location button now appears BEFORE nav links */}
-            <div className="hidden lg:flex items-center space-x-4 xl:space-x-6 2xl:space-x-8">
-              {/* Location Button - Desktop (prominently placed) */}
-              <LocationButton isMobile={false} />
+              {/* Functional Search Bar integration with Tailwind overrides to force CarDekho layout sizing */}
+              <div className="hidden lg:flex flex-1 max-w-[650px] mx-8 xl:mx-12">
+                <div className="w-full relative z-[60] [&_input]:h-[48px] [&_input]:rounded-[16px] [&_input]:text-[15px] [&_input]:border-gray-200 dark:[&_input]:border-dark-600 focus-within:[&_input]:border-[#F97316] focus-within:[&_input]:ring-1 focus-within:[&_input]:ring-[#F97316]/50 transition-all duration-200">
+                  <SearchBar />
+                </div>
+              </div>
 
-              {NAV_LINKS.map((link) => (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  className={({ isActive }) => {
-                    return `${navLinkClasses} ${isActive ? navLinkActiveClasses : navLinkInactiveClasses}`
-                  }}
-                >
-                  {link.name}
-                </NavLink>
-              ))}
+              {/* Right Actions: Language, Wishlist, Login, Location, Theme */}
+              <div className="flex items-center space-x-4 lg:space-x-5 xl:space-x-6">
+                
+                {/* Language UI Mock */}
+                {/* <button className={`hidden lg:flex items-center gap-1.5 text-[15px] font-semibold transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
+                  <span>English</span>
+                </button> */}
 
-              <CategoriesDropdown />
+                {/* Wishlist UI Mock */}
+                {/* <button className={`hidden lg:flex items-center transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                </button> */}
 
-              {!isLoading && (
-                user ? (
-                  <div className="relative" ref={dropdownRef}>
+                {/* Authentication */}
+                {!isLoading && (
+                  user ? (
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        onClick={toggleDropdown}
+                        className="flex items-center gap-2 transition-transform duration-200 hover:scale-105"
+                      >
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shadow-sm ${isDark ? 'bg-yellow-500 text-gray-900' : 'bg-gray-900 text-white'}`}>
+                          {getUserInitials()}
+                        </div>
+                      </button>
+
+                      {isDropdownOpen && (
+                        <div className={`absolute right-0 mt-3 w-52 rounded-xl shadow-xl border py-2 z-50 ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-100'}`}>
+                          <Link
+                            to="/profile"
+                            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${isDark ? 'text-gray-300 hover:bg-dark-700 hover:text-[#F97316]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#F97316]'}`}
+                            onClick={() => setIsDropdownOpen(false)}
+                          >
+                            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            My Profile
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium w-full text-left transition-colors duration-200 ${isDark ? 'text-red-400 hover:bg-dark-700' : 'text-red-500 hover:bg-gray-50'}`}
+                          >
+                            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            Logout
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
                     <button
-                      onClick={toggleDropdown}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-300`}
+                      ref={desktopLoginRef}
+                      onClick={openAuthModalDesktop}
+                      className={`hidden lg:flex items-center gap-2 text-[15px] font-semibold transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${isDark
-                        ? 'bg-yellow-500 text-gray-900'
-                        : 'bg-gray-900 text-white'
-                        }`}>
-                        {getUserInitials()}
-                      </div>
-                      <svg className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''} ${isDark ? 'text-gray-400' : 'text-gray-600'
-                        }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                      Login / Register
+                    </button>
+                  )
+                )}
+
+                <div className="hidden md:block">
+                  <LocationBadge isDark={isDark} variant="desktop" />
+                </div>
+                
+                <ThemeToggle />
+
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={toggleMenu}
+                  className={`lg:hidden focus:outline-none flex-shrink-0 p-1 ml-1 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  aria-label="Toggle Menu"
+                >
+                  <div className="w-6 h-5 flex flex-col justify-between">
+                    <span className={`h-[2px] w-full bg-current transition-all duration-200 ${isOpen ? 'rotate-45 translate-y-2.5' : ''}`} />
+                    <span className={`h-[2px] w-full bg-current transition-all duration-200 ${isOpen ? 'opacity-0' : ''}`} />
+                    <span className={`h-[2px] w-full bg-current transition-all duration-200 ${isOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===============================
+            BOTTOM ROW: Navigation Links
+            =============================== */}
+        <div className="hidden lg:block max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 border-b border-transparent">
+          <div className="flex items-center h-[48px] lg:h-[50px] space-x-8 xl:space-x-10">
+            {NAV_LINKS.map((link) => (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) => `${navLinkClasses} ${isActive ? navLinkActiveClasses : navLinkInactiveClasses}`}
+              >
+                {link.name}
+              </NavLink>
+            ))}
+            <CategoriesDropdown />
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-x-0 bottom-0 bg-black/50 lg:hidden backdrop-blur-sm"
+                style={{ top: 'var(--header-height, 72px)' }}
+                onClick={closeMenu}
+                aria-hidden="true"
+              />
+
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="absolute top-full left-0 w-full lg:hidden shadow-2xl border-t"
+                style={{
+                  backgroundColor: brandColor,
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
+                }}
+              >
+                <div className="max-w-7xl mx-auto px-4 pt-4 pb-5 space-y-1.5 max-h-[calc(100vh-var(--header-height,72px))] overflow-y-auto overscroll-contain">
+                  
+                  {/* Functional Search Bar integration for Mobile Menu */}
+                  <div className="mb-4 relative w-full z-[60] [&_input]:h-[44px] [&_input]:rounded-[12px] [&_input]:text-sm [&_input]:border-gray-200 dark:[&_input]:border-dark-600 focus-within:[&_input]:border-[#F97316]">
+                    <SearchBar />
+                  </div>
+
+                  {NAV_LINKS.map((link) => (
+                    <NavLink
+                      key={link.path}
+                      to={link.path}
+                      className={({ isActive }) => `${mobileNavLinkClasses} ${isActive ? mobileNavLinkActiveClasses : mobileNavLinkInactiveClasses}`}
+                      onClick={closeMenu}
+                    >
+                      {link.name}
+                    </NavLink>
+                  ))}
+
+                  <div className="py-1 border-t border-gray-100 dark:border-dark-700 mt-2 pt-2">
+                    <button
+                      onClick={toggleCategories}
+                      className={`w-full flex items-center justify-between py-2 font-medium text-base sm:text-lg transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}
+                    >
+                      <span>Categories</span>
+                      <svg className={`w-4 h-4 transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180 text-[#F97316]' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
 
-                    {isDropdownOpen && (
-                      <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg border py-2 ${isDark
-                        ? 'bg-dark-800 border-dark-700'
-                        : 'bg-white border-gray-200'
-                        }`}>
+                    <AnimatePresence>
+                      {isCategoriesOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="ml-4 space-y-1 pt-1 pb-2">
+                            {MOBILE_CATEGORIES.map((item, idx) => (
+                              <Link
+                                key={idx}
+                                to={item.path}
+                                className={`block py-2 text-sm sm:text-base transition-colors duration-200 pl-3 border-l-2 border-gray-200 dark:border-dark-700 hover:border-[#F97316] ${isDark ? 'text-gray-300 hover:text-[#F97316]' : 'text-gray-600 hover:text-[#F97316]'}`}
+                                onClick={closeMenu}
+                              >
+                                {item.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {!isLoading && (
+                    user ? (
+                      <div className="pt-2 border-t border-gray-100 dark:border-dark-700">
                         <Link
                           to="/profile"
-                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-200 ${isDark
-                            ? 'text-gray-300 hover:bg-dark-700'
-                            : 'text-gray-700 hover:bg-gray-100'
-                            }`}
-                          onClick={() => setIsDropdownOpen(false)}
+                          className={`${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
+                          onClick={closeMenu}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          My Profile
+                          <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            My Profile
+                          </div>
                         </Link>
                         <button
-                          onClick={handleLogout}
-                          className={`flex items-center gap-3 px-4 py-2.5 text-sm w-full text-left transition-colors duration-200 ${isDark
-                            ? 'text-red-400 hover:bg-dark-700'
-                            : 'text-red-600 hover:bg-gray-100'
-                            }`}
+                          onClick={() => {
+                            handleLogout()
+                            closeMenu()
+                          }}
+                          className={`${mobileNavLinkClasses} ${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-500 hover:text-red-600'}`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
-                          Logout
+                          <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            Logout
+                          </div>
                         </button>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    ref={desktopLoginRef}
-                    onClick={openAuthModalDesktop}
-                    className={`${navLinkClasses} ${navLinkInactiveClasses}`}
-                  >
-                    Login / Register
-                  </button>
-                )
-              )}
-
-              <Link
-                to="/contact"
-                className="
-                  bg-[#0B1F3A]
-                  hover:bg-[#08172C]
-                  text-white
-                  font-semibold
-                  py-1.5 px-3 xl:py-2 xl:px-4 2xl:py-2.5 2xl:px-6
-                  rounded-lg xl:rounded-xl
-                  shadow-lg
-                  transition-all
-                  duration-150
-                  hover:-translate-y-1
-                  text-xs xl:text-sm 2xl:text-base
-                "
-              >
-                Get Started
-              </Link>
-
-              <ThemeToggle />
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={toggleMenu}
-              className={`lg:hidden focus:outline-none flex-shrink-0 p-1 ml-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
-              aria-label="Toggle Menu"
-            >
-              <div className="w-5 sm:w-6 h-4 sm:h-5 flex flex-col justify-between">
-                <span
-                  className={`h-0.5 w-full bg-current transition-all duration-150 ${isOpen ? 'rotate-45 translate-y-1.5 sm:translate-y-2' : ''
-                    }`}
-                />
-                <span
-                  className={`h-0.5 w-full bg-current transition-all duration-150 ${isOpen ? 'opacity-0' : ''
-                    }`}
-                />
-                <span
-                  className={`h-0.5 w-full bg-current transition-all duration-150 ${isOpen ? '-rotate-45 -translate-y-1.5 sm:-translate-y-2' : ''
-                    }`}
-                />
-              </div>
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          <AnimatePresence>
-            {isOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="fixed inset-x-0 bottom-0 bg-black/40 lg:hidden"
-                  style={{ top: 'var(--header-height, 4rem)' }}
-                  onClick={closeMenu}
-                  aria-hidden="true"
-                />
-
-                <motion.div
-                  initial={{ opacity: 0, y: -12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="absolute top-full left-0 w-full lg:hidden shadow-2xl border-t"
-                  style={{
-                    backgroundColor: brandColor,
-                    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
-                  }}
-                >
-                  <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-3 pb-4 space-y-1.5 max-h-[calc(100vh-var(--header-height,4rem))] overflow-y-auto overscroll-contain pr-1">
-                    
-                    {/* Location Button - Mobile (Prominent, at the top) */}
-                    <LocationButton isMobile={true} />
-
-                    {NAV_LINKS.map((link) => (
-                      <NavLink
-                        key={link.path}
-                        to={link.path}
-                        className={({ isActive }) => {
-                          return `${mobileNavLinkClasses} ${isActive ? mobileNavLinkActiveClasses : mobileNavLinkInactiveClasses}`
-                        }}
-                        onClick={closeMenu}
-                      >
-                        {link.name}
-                      </NavLink>
-                    ))}
-
-                    {!isLoading && (
-                      user ? (
-                        <>
-                          <div className={`px-3 py-2 ${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}>
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${isDark
-                                  ? 'bg-yellow-500 text-gray-900'
-                                  : 'bg-gray-900 text-white'
-                                }`}>
-                                {getUserInitials()}
-                              </div>
-                              <span className="font-medium">{getUserName()}</span>
-                            </div>
-                          </div>
-                          <Link
-                            to="/profile"
-                            className={`${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
-                            onClick={closeMenu}
-                          >
-                            <div className="flex items-center gap-3">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              My Profile
-                            </div>
-                          </Link>
-                          <button
-                            onClick={() => {
-                              handleLogout()
-                              closeMenu()
-                            }}
-                            className={`${mobileNavLinkClasses} ${isDark ? 'text-red-400 hover:text-red-300' : 'text-red-600 hover:text-red-700'}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                              </svg>
-                              Logout
-                            </div>
-                          </button>
-                        </>
-                      ) : (
+                    ) : (
+                      <div className="pt-2 border-t border-gray-100 dark:border-dark-700">
                         <button
                           ref={mobileLoginRef}
                           onClick={openAuthModalMobile}
-                          className={`${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
+                          className={`w-full flex items-center gap-3 ${mobileNavLinkClasses} ${mobileNavLinkInactiveClasses}`}
                         >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
                           Login / Register
                         </button>
-                      )
-                    )}
+                      </div>
+                    )
+                  )}
 
-                    <div className="py-1">
-                      <button
-                        onClick={toggleCategories}
-                        className={`w-full flex items-center justify-between py-2 font-medium text-base sm:text-lg transition-colors duration-300 ${isDark ? 'text-white hover:text-yellow-400' : 'text-gray-900 hover:text-gray-700'}`}
-                      >
-                        <span>Categories</span>
-                        <svg
-                          className={`w-4 h-4 transition-transform duration-150 ${isCategoriesOpen ? 'rotate-180' : ''
-                            }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </button>
-
-                      <AnimatePresence>
-                        {isCategoriesOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="ml-2 sm:ml-4 space-y-1 pt-1 pb-2">
-                              {MOBILE_CATEGORIES.map((item, idx) => (
-                                <Link
-                                  key={idx}
-                                  to={item.path}
-                                  className={`block py-2 text-sm sm:text-base transition-colors duration-300 pl-2 border-l-2 border-transparent hover:border-gray-400 ${isDark ? 'text-white hover:text-yellow-400' : 'text-gray-900 hover:text-gray-700'}`}
-                                  onClick={closeMenu}
-                                >
-                                  {item.name}
-                                </Link>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    <Link
-                      to="/contact"
-                      className="
-                        block
-                        text-center
-                        bg-[#0B1F3A]
-                        hover:bg-[#08172C]
-                        text-white
-                        font-semibold
-                        py-2.5
-                        rounded-xl
-                        transition-all
-                        duration-150
-                        text-base
-                        mt-2
-                      "
-                      onClick={closeMenu}
-                    >
-                      Get Started
-                    </Link>
-
-                    <div className="flex items-center justify-between pt-2 mt-1 border-t border-gray-200 dark:border-dark-700">
+                  <div className={`mt-2 pt-4 pb-2 border-t flex flex-col gap-4 ${isDark ? 'border-dark-700' : 'border-gray-100'}`}>
+                    <LocationBadge isDark={isDark} variant="mobile" />
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>Appearance</span>
                       <ThemeToggle />
                     </div>
                   </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* Auth Modal */}
+      {/* FIXED: Dynamic Spacer for Desktop 
+          Because Home.jsx explicitly uses "lg:pt-0" (which removes the CSS padding gap on large screens),
+          the fixed header covers the Hero on desktop. This invisible spacer lives INSIDE the header component, 
+          dynamically takes up exactly '--header-height' space on desktop only, and perfectly pushes the Hero 
+          downwards so no images are ever cut from the top, all without touching Home.jsx.
+      */}
+    <div
+  className="hidden lg:block w-full pointer-events-none"
+  style={{ height: 'calc(var(--header-height, 130px) - 80px)' }}
+  aria-hidden="true"
+/>
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={closeAuthModal}

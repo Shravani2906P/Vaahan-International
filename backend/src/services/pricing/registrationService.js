@@ -1,39 +1,25 @@
 // backend/src/services/pricing/registrationService.js
-class RegistrationService {
-  calculate({ exShowroomPrice, rules }) {
-    if (!rules || !rules.type) {
-      return 0;
-    }
+/*
+================================================================================
+File Name : registrationService.js
+Description : Computes RTO registration charges from state-configured fees.
+================================================================================
+*/
 
-    let fee = 0;
+/**
+ * @param {Object} params
+ * @param {Object} params.stateRule - a StatePricingRule document (lean)
+ * @returns {{ amount: number, flatFee: number, additionalCharges: number }}
+ */
+const calculateRegistration = ({ stateRule }) => {
+  const flatFee = stateRule?.registration?.flatFee ?? 0;
+  const additionalCharges = stateRule?.registration?.additionalCharges ?? 0;
 
-    switch (rules.type) {
-      case 'fixed':
-        fee = rules.fixedAmount || 0;
-        break;
+  return {
+    amount: flatFee + additionalCharges,
+    flatFee,
+    additionalCharges,
+  };
+};
 
-      case 'percentage':
-        fee = (exShowroomPrice * (rules.percentage || 0)) / 100;
-        break;
-
-      case 'slab':
-        if (rules.slabs && Array.isArray(rules.slabs)) {
-          for (const slab of rules.slabs) {
-            if (exShowroomPrice >= slab.minPrice && 
-                (slab.maxPrice === 0 || exShowroomPrice <= slab.maxPrice)) {
-              fee = slab.amount || 0;
-              break;
-            }
-          }
-        }
-        break;
-
-      default:
-        fee = 0;
-    }
-
-    return fee;
-  }
-}
-
-module.exports = RegistrationService;
+module.exports = { calculateRegistration };

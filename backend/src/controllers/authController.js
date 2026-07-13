@@ -371,6 +371,7 @@ exports.completeProfile = async (req, res) => {
         isPhoneVerified: user.isPhoneVerified,
         authProvider: user.authProvider,
         createdAt: user.createdAt,
+        savedLocation: user.savedLocation || null,
       },
     });
   } catch (error) {
@@ -591,10 +592,67 @@ exports.getCurrentUser = async (req, res) => {
         isPhoneVerified: user.isPhoneVerified,
         authProvider: user.authProvider,
         createdAt: user.createdAt,
+        savedLocation: user.savedLocation || null,
       },
     });
   } catch (error) {
     console.error('❌ Get current user error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Please try again.',
+    });
+  }
+};
+
+// ========================================
+// Update Saved Location
+// ========================================
+// PUT /api/auth/location — persists the user's globally-selected location
+// to their MongoDB profile, so it follows them across devices. The
+// frontend still keeps its own copy in localStorage for logged-out users
+// and for instant restore before this round trip completes.
+exports.updateLocation = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { city, district, state, stateCode, pincode, country, latitude, longitude } =
+      req.body;
+
+    if (!city || !state) {
+      return res.status(400).json({
+        success: false,
+        message: 'city and state are required',
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        savedLocation: {
+          city,
+          district,
+          state,
+          stateCode,
+          pincode,
+          country: country || 'India',
+          latitude,
+          longitude,
+          updatedAt: new Date(),
+        },
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Location saved successfully',
+      savedLocation: user.savedLocation,
+    });
+  } catch (error) {
+    console.error('❌ Update location error:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error. Please try again.',
