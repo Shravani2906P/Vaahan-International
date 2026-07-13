@@ -79,7 +79,7 @@ const ModelVariants = () => {
     const trans = (v.transmission || '').toLowerCase();
     const isAuto = trans.includes('auto') || trans.includes('cvt') || trans.includes('dct') || trans.includes('amt') || trans.includes('at');
     const fuel = (v.fuelType || '').toLowerCase();
-    const seats = v.seatingCapacity || '';
+    const seats = String(v.seatingCapacity || '');
     
     if (isAuto) reasons.push("convenient automatic transmission");
     if (fuel.includes('electric') || fuel.includes('ev')) reasons.push("clean zero-emission electric motor");

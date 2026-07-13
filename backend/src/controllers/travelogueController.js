@@ -148,8 +148,8 @@ exports.createTravelogue = async (req, res) => {
 
     // Use manual slug if provided, else generate unique slug from title
     let slug = req.body.slug;
-    if (slug && slug.trim()) {
-      slug = slug
+    if (slug !== undefined && slug !== null && String(slug).trim()) {
+      slug = String(slug)
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
@@ -231,8 +231,8 @@ exports.updateTravelogue = async (req, res) => {
 
     // Use manual slug if provided, else generate slug from title if modified
     let slug = travelogue.slug;
-    if (req.body.slug !== undefined && req.body.slug.trim()) {
-      slug = req.body.slug
+    if (req.body.slug !== undefined && req.body.slug !== null && String(req.body.slug).trim()) {
+      slug = String(req.body.slug)
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');

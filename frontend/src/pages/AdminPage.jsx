@@ -169,6 +169,28 @@ const AdminPage = () => {
       return
     }
 
+    const escapeHtml = (text) => {
+      if (!text) return ''
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+    }
+
+    const validateUrl = (url) => {
+      if (!url) return '#'
+      const trimmed = url.trim()
+      if (trimmed.startsWith('/') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return trimmed
+      }
+      if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(trimmed)) {
+        return 'https://' + trimmed
+      }
+      return '#'
+    }
+
     const htmlContent = editorBlocks.map(block => {
       if (block.type === 'subheading') {
         const borderColors = {
@@ -178,11 +200,13 @@ const AdminPage = () => {
           blue: 'border-sky-500'
         }
         const borderColor = borderColors[block.color] || 'border-[#F97316]'
-        return `<h2 class="text-2xl font-bold border-l-4 ${borderColor} pl-4 py-1 text-white my-6 font-sans">${block.text || ''}</h2>`
+        const safeText = escapeHtml(block.text)
+        return `<h2 class="text-2xl font-bold border-l-4 ${borderColor} pl-4 py-1 text-white my-6 font-sans">${safeText}</h2>`
       }
       
       if (block.type === 'body') {
-        return (block.text || '')
+        const safeText = escapeHtml(block.text || '')
+        return safeText
           .split('\n\n')
           .map(para => para.trim())
           .filter(para => para)
@@ -203,14 +227,16 @@ const AdminPage = () => {
         if (block.style === 'points') {
           const items = (block.text || '').split('\n').map(line => line.trim()).filter(l => l)
           innerHtml = `<ul class="space-y-3">` + items.map(item => {
-            if (item.includes(':')) {
-              const [label, desc] = item.split(/:(.+)/)
+            const safeItem = escapeHtml(item)
+            if (safeItem.includes(':')) {
+              const [label, desc] = safeItem.split(/:(.+)/)
               return `<li class="text-slate-200 text-sm"><strong class="text-white">${label.trim()}:</strong> ${desc ? desc.trim() : ''}</li>`
             }
-            return `<li class="text-slate-200 text-sm">${item}</li>`
+            return `<li class="text-slate-200 text-sm">${safeItem}</li>`
           }).join('') + `</ul>`
         } else {
-          innerHtml = (block.text || '')
+          const safeText = escapeHtml(block.text || '')
+          innerHtml = safeText
             .split('\n\n')
             .map(para => para.trim())
             .filter(p => p)
@@ -218,24 +244,27 @@ const AdminPage = () => {
             .join('')
         }
 
+        const safeTitle = escapeHtml(block.title)
         return `
           <div class="bg-slate-900/60 border-l-4 ${borderColor} rounded-r-2xl p-6 my-6 shadow-md">
-            ${block.title ? `<h3 class="text-lg font-bold text-white mb-4">${block.title}</h3>` : ''}
+            ${safeTitle ? `<h3 class="text-lg font-bold text-white mb-4">${safeTitle}</h3>` : ''}
             ${innerHtml}
           </div>
         `
       }
 
       if (block.type === 'affiliate') {
+        const safeUrl = validateUrl(block.url)
+        const safeText = escapeHtml(block.text)
         return `
           <div class="my-8 flex justify-center">
             <a 
-              href="${block.url || '#'}" 
+              href="${safeUrl}" 
               target="_blank" 
               rel="noopener noreferrer" 
               class="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 text-sm"
             >
-              <span>${block.text || 'View Offer'}</span>
+              <span>${safeText || 'View Offer'}</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>

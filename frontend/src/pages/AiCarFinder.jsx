@@ -235,7 +235,7 @@ const AiCarFinder = () => {
         usage: dailyReality,
         terrain: (nonNegotiables.includes('High ground clearance') || dailyReality.includes('Off-road / adventure')) ? 'Rough' : 'Smooth',
         driver: lifeProfile === 'new_driver' ? 'Beginner' : lifeProfile === 'senior_citizen' ? 'Senior' : 'Experienced',
-        city: location?.city || 'Delhi',
+        city: city,
         state: (() => {
           if (!location?.stateCode) {
             console.warn("⚠️ [Location Warning] location.stateCode is falsy. Falling back to DL for pricing rules.");

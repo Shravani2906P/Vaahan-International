@@ -236,9 +236,8 @@ exports.createArticle = async (req, res) => {
 
     // Use manual slug if provided, else auto-generate from title
     let slug = req.body.slug;
-    if (slug && slug.trim()) {
-      slug = slug
-        .toString()
+    if (slug !== undefined && slug !== null && String(slug).trim()) {
+      slug = String(slug)
         .toLowerCase()
         .trim()
         .replace(/\s+/g, '-')
@@ -353,9 +352,8 @@ exports.updateArticle = async (req, res) => {
 
     // Use manual slug if provided, else generate slug from title if modified
     let slug = article.slug;
-    if (req.body.slug !== undefined && req.body.slug.trim()) {
-      slug = req.body.slug
-        .toString()
+    if (req.body.slug !== undefined && req.body.slug !== null && String(req.body.slug).trim()) {
+      slug = String(req.body.slug)
         .toLowerCase()
         .trim()
         .replace(/\s+/g, '-')

@@ -161,7 +161,11 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     const isAllowed = allowedOrigins.indexOf(origin) !== -1 || 
-                      origin.endsWith('.vercel.app') ||
+                      (origin.endsWith('.vercel.app') && (
+                        origin.includes('vaahan') || 
+                        origin.includes('dryvsquad') || 
+                        origin.includes('demo-frontend-wine')
+                      )) ||
                       /^https?:\/\/localhost:\d+$/.test(origin);
 
     if (isAllowed) {
