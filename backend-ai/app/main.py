@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from llm.prompt_builder import build_prompt, build_rewrite_prompt, check_small_talk, build_small_talk_prompt
 from llm.llm_service import generate
+from llm.car_finder import find_matching_cars
 from db.mongodb import cache_collection, articles_collection
 from datetime import datetime
 
@@ -32,8 +33,11 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
-        "https://vaahan-international-obbc.vercel.app"
+        "https://vaahan-international-obbc.vercel.app",
+        "https://dryvsquad.com",
+        "https://www.dryvsquad.com"
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,6 +74,16 @@ class AIResponse(BaseModel):
     suggest_insurance: Optional[bool] = False
 
 
+class CarFinderRequest(BaseModel):
+    budget: str
+    seating: str
+    usage: str
+    terrain: str
+    driver: str
+    city_type: str
+    custom_query: Optional[str] = ""
+
+
 @app.get("/")
 def root():
     return {"status": "DryvSquad AI Mode API is running"}
@@ -78,6 +92,24 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "dryvsquad-ai"}
+
+
+
+@app.post("/api/ai-car-finder")
+async def ai_car_finder(request: CarFinderRequest):
+    budget = request.budget.strip()
+    seating = request.seating.strip()
+    usage = request.usage.strip()
+    terrain = request.terrain.strip()
+    driver = request.driver.strip()
+    city_type = request.city_type.strip()
+    custom_query = request.custom_query.strip() if request.custom_query else ""
+    
+    if not budget or not seating or not usage or not terrain or not driver or not city_type:
+        raise HTTPException(status_code=400, detail="Missing required search parameters.")
+        
+    result = find_matching_cars(budget, seating, usage, terrain, driver, city_type, custom_query)
+    return result
 
 
 @app.post("/api/ai-mode", response_model=AIResponse)
@@ -232,7 +264,6 @@ async def ai_mode(request: QueryRequest):
 
 
 def watch_mongodb_changes():
-    import threading
     import time
     from app.scripts.ingest_articles import ingest
     

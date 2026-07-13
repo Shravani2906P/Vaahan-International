@@ -11,12 +11,12 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 */
 
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTheme } from '../context/ThemeContext'
 import SearchBar from '../components/SearchBar'
 import Carousel from '../components/Carousel'
 import CarouselCard from '../components/CarouselCard'
-import { useTheme } from '../context/ThemeContext'
 import { getFeaturedTravelogues } from '../data/traveloguesData'
 import { getFeaturedArticles } from '../data/articlesData'
 import { SkeletonStyles, CarouselSkeleton, FadeIn } from '../components/skeletons/Skeletons'
@@ -101,12 +101,15 @@ const TESTIMONIALS = [
   { quote: "As a first-time car buyer, I was overwhelmed by all the technical jargon. Vaahan made it clear.", name: "Amit Sharma", role: "First Time Buyer" }
 ]
 
+
+
 // ========================================
 // HOME COMPONENT - Functional with Hooks
 // ========================================
 
 const Home = () => {
   const { isDark } = useTheme()
+  const navigate = useNavigate()
   const [travelogues, setTravelogues] = useState([])
   const [featuredArticles, setFeaturedArticles] = useState([])
   const [loading, setLoading] = useState(true)
@@ -215,11 +218,7 @@ const Home = () => {
             </div>
           ))}
 
-          {/* Left Arrow Button — moved down from the geometric center (which sat
-            right on top of the poster's title/icon text) to ~64% down, which
-            sits in the car-photo/road area on every banner instead of on top
-            of text. Also sized down so it doesn't dominate a narrow phone
-            screen. */}
+          {/* Left Arrow Button — kept at the far left edge of the page */}
           <button
             onClick={() => goToSlide((currentSlide - 1 + BANNERS.length) % BANNERS.length)}
             className="absolute left-1.5 xs:left-2 sm:left-4 md:left-6 top-[64%] -translate-y-1/2 transform z-30 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 flex items-center justify-center text-black shadow-lg hover:shadow-xl hover:scale-105"
@@ -230,7 +229,7 @@ const Home = () => {
             </svg>
           </button>
 
-          {/* Right Arrow Button - same repositioning/resizing as the left one */}
+          {/* Right Arrow Button - kept at the far right edge of the page */}
           <button
             onClick={() => goToSlide((currentSlide + 1) % BANNERS.length)}
             className="absolute right-1.5 xs:right-2 sm:right-4 md:right-6 top-[64%] -translate-y-1/2 transform z-30 w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-all duration-200 flex items-center justify-center text-black shadow-lg hover:shadow-xl hover:scale-105"
@@ -240,13 +239,19 @@ const Home = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+
+          {/* Top Right "Launch AI Car Finder" CTA Button (positioned below sticky navbar) */}
+          <div className="absolute top-20 right-4 sm:top-22 sm:right-6 md:top-24 md:right-8 z-45">
+            <button
+              onClick={() => navigate('/ai-car-finder')}
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold rounded-xl text-xs sm:text-sm transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_8px_30px_rgb(0,0,0,0.3)] border border-white/20 flex items-center gap-2 cursor-pointer font-sans"
+            >
+              <span>Launch Car Finder</span>
+            </button>
+          </div>
         </div>
 
-        {/* Dots — pulled up well clear of the CTA button (which sits at
-          bottom-2/left-2 on mobile) so the two rows never visually merge into
-          one bar the way they were before. Reverts to a small, tight offset at
-          lg: since the landscape desktop banner is tall enough in real pixels
-          that there's no crowding risk there. */}
+        {/* Dots */}
         <div className="flex justify-center items-center gap-1 xs:gap-1.5 sm:gap-2 md:gap-2.5 absolute bottom-10 xs:bottom-12 sm:bottom-14 md:bottom-16 lg:bottom-6 left-0 right-0 z-20">
           {BANNERS.map((_, index) => (
             <button
@@ -267,6 +272,8 @@ const Home = () => {
             </button>
           ))}
         </div>
+
+
       </section>
     )
   }

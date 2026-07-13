@@ -620,7 +620,7 @@ const ArticleDetail = () => {
 
             {/* Inline Article CTA Buttons (Loan / Insurance) */}
             {(article.showLoanCTA || article.showInsuranceCTA) && (
-              <div className={`mt-4 p-5 rounded-2xl border transition-all duration-300 ${
+              <div className={`mt-8 p-6 rounded-2xl border transition-all duration-300 ${
                 isDark ? 'bg-dark-950/80 border-dark-800 shadow-inner' : 'bg-slate-50 border-slate-200 shadow-sm'
               }`}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -635,7 +635,8 @@ const ArticleDetail = () => {
                   <div className="flex flex-wrap gap-3 w-full sm:w-auto">
                     {article.showLoanCTA && (
                       <Link
-                        to="/lead-loan"
+                        to="/loan-quotes"
+                        state={{ fromArticle: `/article/${slug}` }}
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 text-xs font-bold rounded-xl shadow transition-all hover:shadow-yellow-500/10 w-full sm:w-auto text-center justify-center"
                       >
                         <Landmark className="w-3.5 h-3.5 text-slate-950 shrink-0" />
@@ -644,10 +645,11 @@ const ArticleDetail = () => {
                     )}
                     {article.showInsuranceCTA && (
                       <Link
-                        to="/lead-insurance"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-200 hover:bg-slate-350 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-800 dark:text-white text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 transition-all w-full sm:w-auto text-center justify-center"
+                        to="/insurance-quotes"
+                        state={{ fromArticle: `/article/${slug}` }}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 text-xs font-bold rounded-xl shadow transition-all hover:shadow-yellow-500/10 w-full sm:w-auto text-center justify-center"
                       >
-                        <ShieldAlert className="w-3.5 h-3.5 text-slate-800 dark:text-white shrink-0" />
+                        <ShieldAlert className="w-3.5 h-3.5 text-slate-950 shrink-0" />
                         <span>Get Insurance Quotes</span>
                       </Link>
                     )}
@@ -655,7 +657,6 @@ const ArticleDetail = () => {
                 </div>
               </div>
             )}
-
             {/* Tags */}
             {article.tags && article.tags.length > 0 && (
               <div className={`mt-4 pt-4 border-t transition-colors duration-300 ${isDark ? 'border-dark-700' : 'border-gray-200'}`}>
