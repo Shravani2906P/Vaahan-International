@@ -19,6 +19,7 @@ const {
   searchArticles,
   getFeaturedArticles,
   getRecentArticles,
+  getTopArticlesByCategory,
   createArticle,
   updateArticle,
   deleteArticle,
@@ -54,14 +55,17 @@ router.get('/featured', getFeaturedArticles);
 // Get recent articles (limit 6)
 router.get('/recent', getRecentArticles);
 
-// Get article by slug
-router.get('/:slug', getArticleBySlug);
+// Top articles per category by views (dynamic categories)
+router.get('/top-by-category', getTopArticlesByCategory);
 
-// Get articles by category
+// Get articles by category (must be before /:slug)
 router.get('/category/:category', getArticlesByCategory);
 
 // Search articles
 router.get('/search/:query', searchArticles);
+
+// Get article by slug
+router.get('/:slug', getArticleBySlug);
 
 // Upvote / un-upvote an article (any logged-in member)
 router.post('/:id/upvote', protect, upvoteArticle);

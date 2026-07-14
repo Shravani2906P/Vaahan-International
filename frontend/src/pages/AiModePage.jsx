@@ -12,10 +12,72 @@ import {
   Trash2,
   Send,
   Landmark,
-  ShieldAlert
+  ShieldAlert,
+  X,
+  LogIn,
+  CreditCard
 } from 'lucide-react'
+import AuthModal from '../components/AuthModal'
 
-const API_URL = import.meta.env.VITE_AI_API_URL || 'http://127.0.0.1:8002';
+const API_URL = import.meta.env.VITE_AI_API_URL || 'http://127.0.0.1:8002'
+const AI_QUERY_COUNT_KEY = 'dryvsquad_ai_query_count'
+const FREE_GUEST_LIMIT = 3
+const LOGGED_IN_LIMIT = 10
+const QUERY_WINDOW_MS = 24 * 60 * 60 * 1000 // reset every 24 hours
+
+const readAiQueryUsage = () => {
+  try {
+    const raw = localStorage.getItem(AI_QUERY_COUNT_KEY)
+    if (!raw) return { count: 0, startedAt: Date.now() }
+
+    // Migrate legacy plain-number storage
+    if (/^\d+$/.test(raw)) {
+      return { count: Number(raw), startedAt: Date.now() }
+    }
+
+    const parsed = JSON.parse(raw)
+    const count = Number(parsed?.count)
+    const startedAt = Number(parsed?.startedAt)
+
+    if (!Number.isFinite(count) || count < 0 || !Number.isFinite(startedAt)) {
+      return { count: 0, startedAt: Date.now() }
+    }
+
+    // Window expired → reset
+    if (Date.now() - startedAt >= QUERY_WINDOW_MS) {
+      return { count: 0, startedAt: Date.now() }
+    }
+
+    return { count, startedAt }
+  } catch {
+    return { count: 0, startedAt: Date.now() }
+  }
+}
+
+const writeAiQueryUsage = (usage) => {
+  try {
+    localStorage.setItem(AI_QUERY_COUNT_KEY, JSON.stringify(usage))
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+const getAiQueryCount = () => {
+  const usage = readAiQueryUsage()
+  // Persist a reset if the 24h window expired
+  writeAiQueryUsage(usage)
+  return usage.count
+}
+
+const incrementAiQueryCount = () => {
+  const usage = readAiQueryUsage()
+  const next = {
+    count: usage.count + 1,
+    startedAt: usage.startedAt || Date.now(),
+  }
+  writeAiQueryUsage(next)
+  return next.count
+};
 
 const parseTextLinks = (text) => {
   if (!text) return "";
@@ -80,6 +142,11 @@ const AiModePage = () => {
   const [inputVal, setInputVal] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [showPaywallModal, setShowPaywallModal] = useState(false)
+  const [pendingQuery, setPendingQuery] = useState(null)
+  const [queryCount, setQueryCount] = useState(() => getAiQueryCount())
   const messagesEndRef = useRef(null)
   const processedQueryRef = useRef('')
   
@@ -101,6 +168,20 @@ const AiModePage = () => {
   useEffect(() => {
     localStorage.setItem('dryvsquad_chat_history', JSON.stringify(messages))
   }, [messages])
+
+  // Stay in sync if user logs in / 24h quota window expires
+  useEffect(() => {
+    const syncState = () => {
+      setToken(localStorage.getItem('token'))
+      setQueryCount(getAiQueryCount())
+    }
+    window.addEventListener('storage', syncState)
+    window.addEventListener('focus', syncState)
+    return () => {
+      window.removeEventListener('storage', syncState)
+      window.removeEventListener('focus', syncState)
+    }
+  }, [])
 
   // Rotate loading messages to decrease perceived latency
   const [loadingText, setLoadingText] = useState("Analyzing your query...")
@@ -149,12 +230,48 @@ const AiModePage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
+  const handleAuthModalClose = () => {
+    setIsAuthModalOpen(false)
+    const nextToken = localStorage.getItem('token')
+    setToken(nextToken)
+
+    // After login, resume the blocked query if they still have quota left
+    if (nextToken && pendingQuery) {
+      const count = getAiQueryCount()
+      if (count >= LOGGED_IN_LIMIT) {
+        setPendingQuery(null)
+        setShowPaywallModal(true)
+        return
+      }
+      const text = pendingQuery
+      setPendingQuery(null)
+      handleSendMessage(text)
+    }
+  }
+
   const handleSendMessage = async (text) => {
-    if (!text.trim()) return
+    if (!text.trim() || loading) return
+
+    const trimmed = text.trim()
+    const currentToken = localStorage.getItem('token')
+    const count = getAiQueryCount()
+
+    // After 10 queries → paywall
+    if (count >= LOGGED_IN_LIMIT) {
+      setShowPaywallModal(true)
+      return
+    }
+
+    // After 3 free queries, login required for more (up to 10)
+    if (count >= FREE_GUEST_LIMIT && !currentToken) {
+      setPendingQuery(trimmed)
+      setIsAuthModalOpen(true)
+      return
+    }
 
     const userMsg = {
       sender: 'user',
-      text: text.trim(),
+      text: trimmed,
       timestamp: new Date().toISOString()
     }
     
@@ -167,7 +284,7 @@ const AiModePage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          query: text.trim(),
+          query: trimmed,
           history: messages.map(msg => ({
             sender: msg.sender,
             text: msg.text || '',
@@ -189,6 +306,7 @@ const AiModePage = () => {
       }
       
       setMessages(prev => [...prev, aiMsg])
+      setQueryCount(incrementAiQueryCount())
     } catch (err) {
       setError('Could not connect to the DryvSquad AI service. Please make sure the backend is running.')
     } finally {
@@ -214,6 +332,13 @@ const AiModePage = () => {
     localStorage.removeItem('dryvsquad_chat_history')
   }
 
+  const remainingQueries = Math.max(0, (token ? LOGGED_IN_LIMIT : FREE_GUEST_LIMIT) - queryCount)
+  const quotaLabel = token
+    ? `${remainingQueries} of ${LOGGED_IN_LIMIT} questions left`
+    : queryCount >= FREE_GUEST_LIMIT
+      ? 'Login required for more questions'
+      : `${remainingQueries} of ${FREE_GUEST_LIMIT} free questions left`
+
   const latestUserMsg = [...messages].reverse().find(msg => msg.sender === 'user')
   const currentQuery = latestUserMsg?.text || ''
 
@@ -229,7 +354,7 @@ const AiModePage = () => {
     !latestResult.verdict?.toLowerCase().includes("please try searching");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#131314] text-slate-700 dark:text-[#e3e3e3] font-sans pt-28 pb-32 transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-black text-slate-700 dark:text-[#e3e3e3] font-sans pt-28 pb-32 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 md:px-6 flex gap-6 relative items-start">
         
         {/* Main Content Area */}
@@ -253,7 +378,7 @@ const AiModePage = () => {
                   <button
                     key={suggestion}
                     onClick={() => handleSendMessage(suggestion)}
-                    className="text-left text-xs p-4 bg-white dark:bg-[#1e1f20] hover:bg-slate-100 dark:hover:bg-[#2f3032] border border-slate-200 dark:border-[#2f3032] rounded-xl text-slate-700 dark:text-[#c4c7c5] hover:text-slate-900 dark:hover:text-white transition-all font-medium flex items-center justify-between group shadow-sm"
+                    className="text-left text-xs p-4 bg-white dark:bg-dark-800 hover:bg-slate-100 dark:hover:bg-dark-700 border border-slate-200 dark:border-dark-700 rounded-xl text-slate-700 dark:text-[#c4c7c5] hover:text-slate-900 dark:hover:text-white transition-all font-medium flex items-center justify-between group shadow-sm"
                   >
                     <span>{suggestion}</span>
                     <ChevronRight className="w-4 h-4 text-gray-500 group-hover:text-yellow-600 dark:group-hover:text-yellow-500 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
@@ -268,23 +393,28 @@ const AiModePage = () => {
             <div className="max-w-3xl mx-auto w-full flex flex-col space-y-6">
               
               {/* Clear History Button (Sticky Header) */}
-              <div className="sticky top-[88px] z-10 flex justify-between items-center bg-slate-50/90 dark:bg-[#131314]/90 backdrop-blur-sm pb-2.5 border-b border-slate-200 dark:border-[#2f3032]/40 pt-2.5 transition-colors duration-200">
+              <div className="sticky top-[88px] z-10 flex justify-between items-center bg-white/90 dark:bg-black/90 backdrop-blur-sm pb-2.5 border-b border-slate-200 dark:border-dark-700/40 pt-2.5 transition-colors duration-200">
                 <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Conversation History</span>
-                <button 
-                  onClick={handleNewChat}
-                  className="flex items-center gap-1 text-[10px] text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 font-semibold transition-colors"
-                  title="Clear Chat History"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Clear Chat
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-slate-500 dark:text-gray-400 font-medium">
+                    {quotaLabel}
+                  </span>
+                  <button 
+                    onClick={handleNewChat}
+                    className="flex items-center gap-1 text-[10px] text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 font-semibold transition-colors"
+                    title="Clear Chat History"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Clear Chat
+                  </button>
+                </div>
               </div>
 
               {messages.map((msg, index) => {
                 if (msg.sender === 'user') {
                   return (
                     <div key={index} className="flex justify-end animate-fade-in">
-                      <div className="bg-slate-200 dark:bg-[#2f3032] text-slate-800 dark:text-white px-5 py-3 rounded-2xl max-w-lg shadow-md text-sm font-semibold leading-relaxed border border-slate-300 dark:border-[#3e4042]">
+                      <div className="bg-slate-200 dark:bg-dark-700 text-slate-800 dark:text-white px-5 py-3 rounded-2xl max-w-lg shadow-md text-sm font-semibold leading-relaxed border border-slate-300 dark:border-[#3e4042]">
                         {msg.text}
                       </div>
                     </div>
@@ -296,7 +426,7 @@ const AiModePage = () => {
                   if (isSmallTalk) {
                     return (
                       <div key={index} className="flex justify-start animate-fade-in">
-                        <div className="bg-slate-100 dark:bg-[#202124] text-slate-800 dark:text-[#e3e3e3] px-5 py-3.5 rounded-2xl max-w-lg shadow-sm text-sm leading-relaxed border border-slate-200 dark:border-[#2f3032]">
+                        <div className="bg-slate-100 dark:bg-[#202124] text-slate-800 dark:text-[#e3e3e3] px-5 py-3.5 rounded-2xl max-w-lg shadow-sm text-sm leading-relaxed border border-slate-200 dark:border-dark-700">
                           {parseTextLinks(result.verdict)}
                         </div>
                       </div>
@@ -308,7 +438,7 @@ const AiModePage = () => {
                     !result.verdict?.toLowerCase().includes("please try searching")
 
                   return (
-                    <div key={index} className="space-y-6 bg-white dark:bg-[#1e1f20]/30 border border-slate-200 dark:border-[#2f3032]/40 rounded-2xl p-6 shadow-md dark:shadow-sm animate-fade-in">
+                    <div key={index} className="space-y-6 bg-white dark:bg-dark-800/30 border border-slate-200 dark:border-dark-700/40 rounded-2xl p-6 shadow-md dark:shadow-sm animate-fade-in">
                       
                       {/* Verdict */}
                       <div className="space-y-2">
@@ -367,7 +497,7 @@ const AiModePage = () => {
 
                       {/* Empty source fallback */}
                       {!msgRelevant && (
-                        <div className="bg-slate-100 dark:bg-[#1e1f20] rounded-xl p-4 text-center border border-slate-200 dark:border-[#2f3032] space-y-3">
+                        <div className="bg-slate-100 dark:bg-dark-800 rounded-xl p-4 text-center border border-slate-200 dark:border-dark-700 space-y-3">
                           <p className="text-xs text-slate-500 dark:text-gray-400">
                             No specific matching articles were found in the DryvSquad Knowledge base.
                           </p>
@@ -412,7 +542,7 @@ const AiModePage = () => {
 
               {/* Loading Indicator */}
               {loading && (
-                <div className="flex flex-col items-start space-y-2 bg-white dark:bg-[#1e1f20]/30 border border-slate-200 dark:border-[#2f3032]/40 rounded-2xl p-6 shadow-md dark:shadow-sm w-full">
+                <div className="flex flex-col items-start space-y-2 bg-white dark:bg-dark-800/30 border border-slate-200 dark:border-dark-700/40 rounded-2xl p-6 shadow-md dark:shadow-sm w-full">
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-5 h-5 text-yellow-600 dark:text-yellow-500 animate-spin" />
                     <p className="text-xs text-slate-500 dark:text-gray-400 font-medium transition-all duration-300">
@@ -438,8 +568,8 @@ const AiModePage = () => {
 
         {/* Right Sidebar (Related Articles)*/}
         {currentQuery && !loading && isRelevant && uniqueSources.length > 0 && (
-          <aside className="w-[320px] bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2f3032] rounded-2xl p-5 flex flex-col space-y-4 shrink-0 hidden lg:flex sticky top-28 h-fit max-h-[calc(100vh-160px)] overflow-y-auto shadow-md dark:shadow-sm">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-[#2f3032]">
+          <aside className="w-[320px] bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-2xl p-5 flex flex-col space-y-4 shrink-0 hidden lg:flex sticky top-28 h-fit max-h-[calc(100vh-160px)] overflow-y-auto shadow-md dark:shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-dark-700">
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-yellow-600 dark:text-yellow-500" />
                 <span className="text-xs font-bold text-slate-800 dark:text-white uppercase tracking-wider">
@@ -454,7 +584,7 @@ const AiModePage = () => {
                 <Link
                   key={i}
                   to={`/article/${source.slug}`}
-                  className="group p-3.5 bg-slate-50 dark:bg-[#131314] hover:bg-slate-100 dark:hover:bg-[#252628] rounded-xl border border-slate-100 dark:border-[#2f3032] hover:border-yellow-600/30 dark:hover:border-yellow-500/30 transition-all flex flex-col space-y-2 cursor-pointer shadow-sm"
+                  className="group p-3.5 bg-white dark:bg-black hover:bg-slate-100 dark:hover:bg-[#252628] rounded-xl border border-slate-100 dark:border-dark-700 hover:border-yellow-600/30 dark:hover:border-yellow-500/30 transition-all flex flex-col space-y-2 cursor-pointer shadow-sm"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -481,7 +611,7 @@ const AiModePage = () => {
 
             <Link
               to="/articles"
-              className="w-full mt-2 py-2.5 bg-slate-100 dark:bg-[#2f3032] hover:bg-slate-200 dark:hover:bg-[#3e4042] text-slate-600 dark:text-[#c4c7c5] hover:text-slate-800 dark:hover:text-white rounded-xl text-center transition-colors shadow-sm block text-xs font-bold"
+              className="w-full mt-2 py-2.5 bg-slate-100 dark:bg-dark-700 hover:bg-slate-200 dark:hover:bg-dark-600 text-slate-600 dark:text-[#c4c7c5] hover:text-slate-800 dark:hover:text-white rounded-xl text-center transition-colors shadow-sm block text-xs font-bold"
             >
               Show all articles
             </Link>
@@ -493,12 +623,12 @@ const AiModePage = () => {
       {/*Search Bar */}
       <footer className="fixed bottom-0 left-0 right-0 from-slate-50 via-slate-50 to-transparent dark:from-[#131314] dark:via-[#131314] dark:to-transparent pt-8 pb-6 px-6 z-40 flex justify-center transition-colors duration-200">
         <form onSubmit={handleSearchSubmit} className="max-w-2xl w-full">
-          <div className="w-full bg-white dark:bg-[#1e1f20] border border-slate-200 dark:border-[#2f3032] rounded-2xl flex items-center px-4 py-2.5 shadow-lg focus-within:ring-1 focus-within:ring-yellow-500/50">
+          <div className="w-full bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-2xl flex items-center px-4 py-2.5 shadow-lg focus-within:ring-1 focus-within:ring-yellow-500/50">
             
             <button 
               type="button"
               onClick={handleNewChat}
-              className="w-9 h-9 rounded-full bg-slate-100 dark:bg-[#2f3032] hover:bg-slate-200 dark:hover:bg-[#3e4042] text-slate-500 dark:text-[#c4c7c5] hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors shadow-sm shrink-0"
+              className="w-9 h-9 rounded-full bg-slate-100 dark:bg-dark-700 hover:bg-slate-200 dark:hover:bg-dark-600 text-slate-500 dark:text-[#c4c7c5] hover:text-slate-700 dark:hover:text-white flex items-center justify-center transition-colors shadow-sm shrink-0"
               title="Start New Chat / Clear History"
             >
               <Plus className="w-5 h-5" />
@@ -525,8 +655,70 @@ const AiModePage = () => {
             </button>
 
           </div>
+          <p className="text-center text-[10px] text-slate-400 dark:text-gray-500 mt-2 font-medium">
+            {quotaLabel}
+          </p>
         </form>
       </footer>
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={handleAuthModalClose} />
+
+      {/* Login prompt overlay message when auth modal opens from quota */}
+      {isAuthModalOpen && !token && queryCount >= FREE_GUEST_LIMIT && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[60] max-w-sm w-[calc(100%-2rem)] pointer-events-none">
+          <div className="bg-black text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl border border-yellow-500/30 flex items-center gap-2">
+            <LogIn className="w-4 h-4 text-yellow-500 shrink-0" />
+            <span>You've used {FREE_GUEST_LIMIT} free questions. Log in to ask up to {LOGGED_IN_LIMIT}.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Paywall after 10 queries */}
+      {showPaywallModal && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-white dark:bg-dark-800 border border-slate-200 dark:border-dark-700 rounded-2xl shadow-2xl p-6 relative">
+            <button
+              type="button"
+              onClick={() => setShowPaywallModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-dark-700 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col items-center text-center space-y-4 pt-2">
+              <div className="w-14 h-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center">
+                <CreditCard className="w-7 h-7 text-yellow-600 dark:text-yellow-500" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">
+                  You've reached your limit
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-[#9ca3af] leading-relaxed">
+                  You've used all {LOGGED_IN_LIMIT} AI questions. Upgrade to continue getting automotive answers from DryvSquad AI.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPaywallModal(false)
+                  navigate('/contact')
+                }}
+                className="w-full py-3.5 rounded-xl bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold text-sm shadow-lg shadow-yellow-500/20 transition-all"
+              >
+                Pay Now
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowPaywallModal(false)}
+                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )

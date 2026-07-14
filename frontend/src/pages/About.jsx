@@ -62,7 +62,7 @@ class AboutPage extends BasePage {
               <motion.div variants={this.fadeLeft} initial="hidden" whileInView="visible" viewport={{ once: true }} className={`rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8 transform hover:-translate-y-2 transition-all duration-300 ${
                 isDark ? 'bg-dark-800' : 'bg-white'
               }`}>
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
                   <span className="text-2xl sm:text-3xl">🎯</span>
                 </div>
                 <h3 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Our Mission</h3>
@@ -72,7 +72,7 @@ class AboutPage extends BasePage {
               <motion.div variants={this.fadeRight} initial="hidden" whileInView="visible" viewport={{ once: true }} className={`rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8 transform hover:-translate-y-2 transition-all duration-300 ${
                 isDark ? 'bg-dark-800' : 'bg-white'
               }`}>
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-r from-dark-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
                   <span className="text-2xl sm:text-3xl">👁️</span>
                 </div>
                 <h3 className={`text-xl sm:text-2xl font-bold mb-3 sm:mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Our Vision</h3>

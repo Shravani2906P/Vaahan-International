@@ -309,7 +309,7 @@ const AiCarFinder = () => {
         const carName = checkoutData.selectedCar || (recommendations[0] ? `${recommendations[0].brand} ${recommendations[0].name}` : 'Selected Car')
         
         // Colors & Theme Branding (Deep Slate Blue & Amber Gold)
-        const primaryColor = '#0f172a' // slate-900
+        const primaryColor = '#000000' // brand black
         const accentColor = '#eab308'  // yellow-500
         
         // Page 1: Cover Page
@@ -1234,7 +1234,7 @@ const AiCarFinder = () => {
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-8 relative z-10 shadow-2xl text-slate-100 flex flex-col justify-between overflow-y-auto max-h-[90vh]"
+              className="bg-black border border-zinc-800 rounded-3xl w-full max-w-lg p-6 sm:p-8 relative z-10 shadow-2xl text-slate-100 flex flex-col justify-between overflow-y-auto max-h-[90vh]"
             >
               {/* Close Button */}
               <button 

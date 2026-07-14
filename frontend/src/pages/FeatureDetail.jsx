@@ -57,7 +57,7 @@ const FeatureDetail = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-32 pb-16 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-700">
+      <section className="relative overflow-hidden pt-32 pb-16 bg-gradient-to-r from-dark-950 via-slate-900 to-slate-700">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="container-custom relative z-10">
           <div className="max-w-3xl mx-auto px-4 sm:px-6">
@@ -111,7 +111,7 @@ const FeatureDetail = () => {
             <div className="article-content">
               {/* Simple Explanation */}
               {feature.simpleExplanation && (
-                <div className={`mb-6 sm:mb-8 p-4 sm:p-6 rounded-xl border ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-blue-50 border-blue-200'}`}>
+                <div className={`mb-6 sm:mb-8 p-4 sm:p-6 rounded-xl border ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-dark-50 border-dark-200'}`}>
                   <h3 className={`text-lg sm:text-xl font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>💡 Simple Explanation</h3>
                   <div className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                     <p><span className="font-semibold">What it is:</span> {feature.simpleExplanation.what}</p>

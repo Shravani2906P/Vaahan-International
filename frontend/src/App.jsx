@@ -60,7 +60,7 @@
 //   return (
 //     <ThemeProvider>
 //       <LocationProvider>
-//         <div className="flex flex-col min-h-screen bg-white dark:bg-dark-950 transition-colors duration-100">
+//         <div className="flex flex-col min-h-screen bg-white dark:bg-black transition-colors duration-100">
 //           <CommonHeader />
 //           <LocationModal />
 //           <main className="flex-grow pt-0">
@@ -167,7 +167,7 @@ function App() {
   return (
     <ThemeProvider>
       <LocationProvider>
-        <div className="flex flex-col min-h-screen bg-white dark:bg-dark-950 transition-colors duration-100">
+        <div className="flex flex-col min-h-screen bg-white dark:bg-black transition-colors duration-100">
           <CommonHeader />
           <main className="flex-grow pt-0">
             <ScrollToTop />

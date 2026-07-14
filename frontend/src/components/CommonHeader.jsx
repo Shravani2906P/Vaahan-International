@@ -101,7 +101,7 @@ const CommonHeader = () => {
   const navRef = useRef(null)
 
   // Memoized values
-  const brandColor = useMemo(() => isDark ? '#0f172a' : '#ffffff', [isDark])
+  const brandColor = useMemo(() => isDark ? '#000000' : '#ffffff', [isDark])
 
   // Publish the nav's real, live rendered height as a CSS variable on <html>.
   useEffect(() => {
@@ -281,7 +281,7 @@ const CommonHeader = () => {
     const catBgColor = isDark ? 'bg-dark-800' : 'bg-white'
     
     // Active style match
-    const catHoverText = 'hover:text-[#F97316]'
+    const catHoverText = 'hover:text-[#C69327]'
 
     return (
       <div
@@ -292,7 +292,7 @@ const CommonHeader = () => {
       >
         <button className={`flex items-center gap-1 font-semibold text-[15px] xl:text-[16px] tracking-wide transition-colors duration-200 h-full border-b-[3px] border-transparent ${catTextColor} ${catHoverText}`}>
           Categories
-          <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-200 ${isCatOpen ? 'rotate-180 text-[#F97316]' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-3 h-3 xl:w-4 xl:h-4 transition-transform duration-200 ${isCatOpen ? 'rotate-180 text-[#C69327]' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
@@ -312,7 +312,7 @@ const CommonHeader = () => {
                 <div className={`font-bold text-sm sm:text-base ${catTextColor}`}>Compare Cars</div>
                 <div className={`text-[11px] sm:text-xs ${catSubTextColor}`}>Side by side comparison</div>
               </div>
-              <span className="text-[#F97316] text-sm">→</span>
+              <span className="text-[#C69327] text-sm">→</span>
             </Link>
 
             {DESKTOP_CATEGORIES.map((category, idx) => (
@@ -327,7 +327,7 @@ const CommonHeader = () => {
                     {category.name}
                   </div>
                 </div>
-                <span className="text-[#F97316] text-sm opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                <span className="text-[#C69327] text-sm opacity-0 group-hover:opacity-100 transition-opacity">→</span>
               </Link>
             ))}
           </div>
@@ -338,14 +338,14 @@ const CommonHeader = () => {
 
   // Active / Inactive states matching CarDekho (Orange hover/underline)
   const navLinkClasses = `h-full flex items-center font-semibold text-[15px] xl:text-[16px] tracking-wide transition-all duration-200 border-b-[3px] pt-[3px]`
-  const navLinkActiveClasses = 'text-[#F97316] border-[#F97316]'
+  const navLinkActiveClasses = 'text-[#C69327] border-[#C69327]'
   const navLinkInactiveClasses = isDark 
-    ? 'text-white hover:text-[#F97316] border-transparent' 
-    : 'text-gray-900 hover:text-[#F97316] border-transparent'
+    ? 'text-white hover:text-[#C69327] border-transparent' 
+    : 'text-gray-900 hover:text-[#C69327] border-transparent'
 
   const mobileNavLinkClasses = `block py-2.5 font-medium text-base sm:text-lg transition-colors duration-200`
-  const mobileNavLinkActiveClasses = 'text-[#F97316] font-bold'
-  const mobileNavLinkInactiveClasses = isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'
+  const mobileNavLinkActiveClasses = 'text-[#C69327] font-bold'
+  const mobileNavLinkInactiveClasses = isDark ? 'text-white hover:text-[#C69327]' : 'text-gray-900 hover:text-[#C69327]'
 
   const getUserInitials = () => {
     if (!user) return '?'
@@ -377,16 +377,16 @@ const CommonHeader = () => {
               {/* Logo */}
               <Link to="/" className="flex items-center group flex-shrink-0">
                 <img
-                  src={isDark ? "/DSLogo-Dark4.png" : "/DSLogo2.png"}
-                  alt="Vaahan International"
-                  className="h-14 sm:h-16 lg:h-[60px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
-                  style={{ maxWidth: '220px' }}
+                  src={isDark ? "/DSLogo-Dark.png" : "/DSLogo-Light.png"}
+                  alt="DryvSquad"
+                  className="h-16 sm:h-[72px] lg:h-[80px] w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ maxWidth: '280px' }}
                 />
               </Link>
 
               {/* Functional Search Bar integration with Tailwind overrides to force CarDekho layout sizing */}
               <div className="hidden lg:flex flex-1 max-w-[650px] mx-8 xl:mx-12">
-                <div className="w-full relative z-[60] [&_input]:h-[48px] [&_input]:rounded-[16px] [&_input]:text-[15px] [&_input]:border-gray-200 dark:[&_input]:border-dark-600 focus-within:[&_input]:border-[#F97316] focus-within:[&_input]:ring-1 focus-within:[&_input]:ring-[#F97316]/50 transition-all duration-200">
+                <div className="w-full relative z-[60] [&_input]:h-[48px] [&_input]:rounded-[16px] [&_input]:text-[15px] [&_input]:border-gray-200 dark:[&_input]:border-dark-600 focus-within:[&_input]:border-[#C69327] focus-within:[&_input]:ring-1 focus-within:[&_input]:ring-[#C69327]/50 transition-all duration-200">
                   <SearchBar />
                 </div>
               </div>
@@ -395,13 +395,13 @@ const CommonHeader = () => {
               <div className="flex items-center space-x-4 lg:space-x-5 xl:space-x-6">
                 
                 {/* Language UI Mock */}
-                {/* <button className={`hidden lg:flex items-center gap-1.5 text-[15px] font-semibold transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}>
+                {/* <button className={`hidden lg:flex items-center gap-1.5 text-[15px] font-semibold transition-colors duration-200 ${isDark ? 'text-white hover:text-[#C69327]' : 'text-gray-900 hover:text-[#C69327]'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>
                   <span>English</span>
                 </button> */}
 
                 {/* Wishlist UI Mock */}
-                {/* <button className={`hidden lg:flex items-center transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}>
+                {/* <button className={`hidden lg:flex items-center transition-colors duration-200 ${isDark ? 'text-white hover:text-[#C69327]' : 'text-gray-900 hover:text-[#C69327]'}`}>
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                 </button> */}
 
@@ -422,7 +422,7 @@ const CommonHeader = () => {
                         <div className={`absolute right-0 mt-3 w-52 rounded-xl shadow-xl border py-2 z-50 ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-white border-gray-100'}`}>
                           <Link
                             to="/profile"
-                            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${isDark ? 'text-gray-300 hover:bg-dark-700 hover:text-[#F97316]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#F97316]'}`}
+                            className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${isDark ? 'text-gray-300 hover:bg-dark-700 hover:text-[#C69327]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#C69327]'}`}
                             onClick={() => setIsDropdownOpen(false)}
                           >
                             <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -442,7 +442,7 @@ const CommonHeader = () => {
                     <button
                       ref={desktopLoginRef}
                       onClick={openAuthModalDesktop}
-                      className={`hidden lg:flex items-center gap-2 text-[15px] font-semibold transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}
+                      className={`hidden lg:flex items-center gap-2 text-[15px] font-semibold transition-colors duration-200 ${isDark ? 'text-white hover:text-[#C69327]' : 'text-gray-900 hover:text-[#C69327]'}`}
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                       Login / Register
@@ -526,7 +526,7 @@ const CommonHeader = () => {
                 <div className="max-w-7xl mx-auto px-4 pt-4 pb-5 space-y-1.5 max-h-[calc(100vh-var(--header-height,72px))] overflow-y-auto overscroll-contain">
                   
                   {/* Functional Search Bar integration for Mobile Menu */}
-                  <div className="mb-4 relative w-full z-[60] [&_input]:h-[44px] [&_input]:rounded-[12px] [&_input]:text-sm [&_input]:border-gray-200 dark:[&_input]:border-dark-600 focus-within:[&_input]:border-[#F97316]">
+                  <div className="mb-4 relative w-full z-[60] [&_input]:h-[44px] [&_input]:rounded-[12px] [&_input]:text-sm [&_input]:border-gray-200 dark:[&_input]:border-dark-600 focus-within:[&_input]:border-[#C69327]">
                     <SearchBar />
                   </div>
 
@@ -547,7 +547,7 @@ const CommonHeader = () => {
                         navigate('/ai-car-finder');
                         closeMenu();
                       }}
-                      className="w-full py-2.5 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-xl text-sm transition-all duration-300 shadow-md flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                      className="w-full py-2.5 bg-[#C69327] hover:bg-[#A87B1F] text-white font-bold rounded-xl text-sm transition-all duration-300 shadow-md flex items-center justify-center gap-1.5 cursor-pointer font-sans"
                     >
                       <span>Launch Car Finder</span>
                     </button>
@@ -556,10 +556,10 @@ const CommonHeader = () => {
                   <div className="py-1 border-t border-gray-100 dark:border-dark-700 mt-2 pt-2">
                     <button
                       onClick={toggleCategories}
-                      className={`w-full flex items-center justify-between py-2 font-medium text-base sm:text-lg transition-colors duration-200 ${isDark ? 'text-white hover:text-[#F97316]' : 'text-gray-900 hover:text-[#F97316]'}`}
+                      className={`w-full flex items-center justify-between py-2 font-medium text-base sm:text-lg transition-colors duration-200 ${isDark ? 'text-white hover:text-[#C69327]' : 'text-gray-900 hover:text-[#C69327]'}`}
                     >
                       <span>Categories</span>
-                      <svg className={`w-4 h-4 transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180 text-[#F97316]' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-4 h-4 transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180 text-[#C69327]' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
@@ -578,7 +578,7 @@ const CommonHeader = () => {
                               <Link
                                 key={idx}
                                 to={item.path}
-                                className={`block py-2 text-sm sm:text-base transition-colors duration-200 pl-3 border-l-2 border-gray-200 dark:border-dark-700 hover:border-[#F97316] ${isDark ? 'text-gray-300 hover:text-[#F97316]' : 'text-gray-600 hover:text-[#F97316]'}`}
+                                className={`block py-2 text-sm sm:text-base transition-colors duration-200 pl-3 border-l-2 border-gray-200 dark:border-dark-700 hover:border-[#C69327] ${isDark ? 'text-gray-300 hover:text-[#C69327]' : 'text-gray-600 hover:text-[#C69327]'}`}
                                 onClick={closeMenu}
                               >
                                 {item.name}

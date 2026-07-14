@@ -10,16 +10,25 @@ try:
 except Exception as e:
     print(f"[WARNING] Could not create text index: {e}")
 
-# Load CrossEncoder re-ranker model once at module level
-reranker_model = None
-if os.getenv("DISABLE_RERANKER", "false").lower() != "true":
-    try:
-        print("[INFO] Loading CrossEncoder re-ranker model...")
-        from sentence_transformers import CrossEncoder
-        reranker_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-        print("[SUCCESS] CrossEncoder re-ranker model loaded successfully.")
-    except Exception as e:
-        print(f"[WARNING] Could not load CrossEncoder model: {e}. Re-ranking fallback will be used.")
+# Lazy-load CrossEncoder re-ranker model on first use
+_reranker_model = None
+_reranker_loaded = False
+
+
+def _get_reranker():
+    """Return the CrossEncoder re-ranker, loading it on first call."""
+    global _reranker_model, _reranker_loaded
+    if not _reranker_loaded:
+        _reranker_loaded = True
+        if os.getenv("DISABLE_RERANKER", "false").lower() != "true":
+            try:
+                print("[INFO] Lazy-loading CrossEncoder re-ranker model...")
+                from sentence_transformers import CrossEncoder
+                _reranker_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+                print("[SUCCESS] CrossEncoder re-ranker model loaded successfully.")
+            except Exception as e:
+                print(f"[WARNING] Could not load CrossEncoder model: {e}. Re-ranking fallback will be used.")
+    return _reranker_model
 
 def cosine_similarity(a, b):
     return np.dot(a, b) / (
@@ -84,10 +93,11 @@ def retrieve(query, top_k=5):
     # Step 3: Reciprocal Rank Fusion (RRF) merge candidates
     merged_results = reciprocal_rank_fusion(vector_results, keyword_results, limit=candidate_limit)
 
-    if reranker_model is not None and len(merged_results) > 0:
+    reranker = _get_reranker()
+    if reranker is not None and len(merged_results) > 0:
         try:
             pairs = [[query, doc["chunk_text"]] for doc in merged_results]
-            scores = reranker_model.predict(pairs)
+            scores = reranker.predict(pairs)
             scored_docs = []
             for idx, score in enumerate(scores):
                 doc = merged_results[idx]

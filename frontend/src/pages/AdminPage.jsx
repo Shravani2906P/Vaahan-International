@@ -226,12 +226,12 @@ const AdminPage = () => {
     const htmlContent = editorBlocks.map(block => {
       if (block.type === 'subheading') {
         const borderColors = {
-          orange: 'border-[#F97316]',
+          orange: 'border-[#C69327]',
           yellow: 'border-yellow-500',
           green: 'border-emerald-500',
           blue: 'border-sky-500'
         }
-        const borderColor = borderColors[block.color] || 'border-[#F97316]'
+        const borderColor = borderColors[block.color] || 'border-[#C69327]'
         const safeText = escapeHtml(block.text)
         return `<h2 class="text-2xl font-bold border-l-4 ${borderColor} pl-4 py-1 my-6 font-sans">${safeText}</h2>`
       }
@@ -248,12 +248,12 @@ const AdminPage = () => {
 
       if (block.type === 'callout') {
         const borderColors = {
-          orange: 'border-[#F97316]',
+          orange: 'border-[#C69327]',
           yellow: 'border-yellow-500',
           green: 'border-emerald-500',
           blue: 'border-sky-500'
         }
-        const borderColor = borderColors[block.color] || 'border-[#F97316]'
+        const borderColor = borderColors[block.color] || 'border-[#C69327]'
         
         let innerHtml = ''
         if (block.style === 'points') {
@@ -294,7 +294,7 @@ const AdminPage = () => {
               href="${safeUrl}" 
               target="_blank" 
               rel="noopener noreferrer" 
-              class="inline-flex items-center gap-2 px-6 py-3 bg-[#F97316] hover:bg-[#EA580C] text-white font-bold rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 text-sm"
+              class="inline-flex items-center gap-2 px-6 py-3 bg-[#C69327] hover:bg-[#A87B1F] text-white font-bold rounded-xl transition-all shadow-lg hover:scale-105 active:scale-95 text-sm"
             >
               <span>${safeText || 'View Offer'}</span>
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1457,7 +1457,7 @@ const AdminPage = () => {
             {/* Full Height Preview Area */}
             <div className="bg-slate-950 text-white pb-8">
               {/* Cover Banner (Hero) */}
-              <div className="relative overflow-hidden pt-10 pb-8 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-800 border-b border-slate-800">
+              <div className="relative overflow-hidden pt-10 pb-8 bg-gradient-to-r from-dark-950 via-slate-900 to-slate-800 border-b border-slate-800"> 
                 <div className="px-6 max-w-2xl mx-auto">
                   {/* Category & Read Time */}
                   <div className="flex flex-wrap gap-2 mb-3">

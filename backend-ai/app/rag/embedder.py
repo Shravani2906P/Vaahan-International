@@ -1,11 +1,22 @@
-from sentence_transformers import SentenceTransformer
 import numpy as np
 
-# Load model once at module level, so it doesn't reload on every call
-# model used :- all-MiniLM-L6-v2 
+# Lazy-load model on first use to reduce startup memory (critical for
+# hosting platforms with tight RAM limits like Render's 512 MB free tier).
+# model used :- all-MiniLM-L6-v2
 
 MODEL_NAME = "all-MiniLM-L6-v2"
-model = SentenceTransformer(MODEL_NAME)
+_model = None
+
+
+def _get_model():
+    """Return the SentenceTransformer model, loading it on first call."""
+    global _model
+    if _model is None:
+        print(f"[INFO] Lazy-loading SentenceTransformer model '{MODEL_NAME}'...")
+        from sentence_transformers import SentenceTransformer
+        _model = SentenceTransformer(MODEL_NAME)
+        print(f"[SUCCESS] SentenceTransformer model loaded.")
+    return _model
 
 
 def embed_texts(texts: list[str]) -> np.ndarray:
@@ -14,7 +25,7 @@ def embed_texts(texts: list[str]) -> np.ndarray:
     Returns a numpy array of shape (len(texts), 384)
     384 is the vector dimension for all-MiniLM-L6-v2
     """
-    embeddings = model.encode(
+    embeddings = _get_model().encode(
         texts,
         show_progress_bar=True,
         batch_size=32,
@@ -28,7 +39,7 @@ def embed_query(query: str) -> np.ndarray:
     Embed a single user query for similarity search.
     Returns a numpy array of shape (1, 384)
     """
-    embedding = model.encode([query], convert_to_numpy=True)
+    embedding = _get_model().encode([query], convert_to_numpy=True)
     return embedding
 
 

@@ -1109,12 +1109,12 @@
 //           </div>
 //           <div className="container-custom relative z-10">
 //             <div className="max-w-3xl">
-//               <div className="inline-block px-3 sm:px-4 py-1.5 bg-[#fc641c] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm">
+//               <div className="inline-block px-3 sm:px-4 py-1.5 bg-[#C69327] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm">
 //                 🚗 Car Comparison Tool
 //               </div>
 //               <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6">
 //                 Compare Cars{' '}
-//                 <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Side by Side</span>
+//                 <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Side by Side</span>
 //               </h1>
 //               <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8">
 //                 Select two cars to compare their features, scores, and specifications
@@ -1180,7 +1180,7 @@
 //               initial={{ opacity: 0, y: 20 }}
 //               animate={{ opacity: 1, y: 0 }}
 //               transition={{ delay: 0.2, duration: 0.5 }}
-//               className="inline-block px-3 sm:px-4 py-1.5 bg-[#fc641c] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm"
+//               className="inline-block px-3 sm:px-4 py-1.5 bg-[#C69327] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm"
 //             >
 //               🚗 Car Comparison Tool
 //             </motion.div>
@@ -1192,7 +1192,7 @@
 //               className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6"
 //             >
 //               Compare Cars{' '}
-//               <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Side by Side</span>
+//               <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Side by Side</span>
 //             </motion.h1>
 
 //             <motion.p
@@ -1286,7 +1286,7 @@
 //                   disabled={!car1 || !car2}
 //                   className={`w-full sm:w-auto sm:min-w-[280px] max-w-full px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg font-bold text-sm sm:text-base transition-all duration-300 ${
 //                     car1 && car2
-//                     ? 'bg-[#fc641c] hover:bg-[#e65a18] text-white shadow-md shadow-orange-500/20' 
+//                     ? 'bg-[#C69327] hover:bg-[#A87B1F] text-white shadow-md shadow-orange-500/20' 
 //                     : 'bg-gray-200 dark:bg-dark-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
 //                   }`}
 //                 >
@@ -1315,7 +1315,7 @@
 //             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className={`rounded-2xl p-8 max-w-md w-full text-center shadow-2xl ${isDark ? 'bg-dark-800' : 'bg-white'}`}>
 //               <div className="relative w-24 h-24 mx-auto mb-6">
 //                 <div className={`absolute inset-0 border-4 rounded-full ${isDark ? 'border-dark-600' : 'border-gray-200'}`} />
-//                 <div className="absolute inset-0 border-4 border-[#fc641c] rounded-full border-t-transparent animate-spin" />
+//                 <div className="absolute inset-0 border-4 border-[#C69327] rounded-full border-t-transparent animate-spin" />
 //                 <div className="absolute inset-0 flex items-center justify-center text-3xl">🚗</div>
 //               </div>
 //               <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Analyzing Cars</h3>
@@ -2447,12 +2447,12 @@ const CompareCars = () => {
           </div>
           <div className="container-custom relative z-10">
             <div className="max-w-3xl">
-              <div className="inline-block px-3 sm:px-4 py-1.5 bg-[#fc641c] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm">
+              <div className="inline-block px-3 sm:px-4 py-1.5 bg-[#C69327] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm">
                 🚗 Car Comparison Tool
               </div>
               <h1 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6">
                 Compare Cars{' '}
-                <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Side by Side</span>
+                <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Side by Side</span>
               </h1>
               <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8">
                 Select two cars to compare their features, scores, and specifications
@@ -2522,7 +2522,7 @@ const CompareCars = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-block px-3 sm:px-4 py-1.5 bg-[#fc641c] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm"
+              className="inline-block px-3 sm:px-4 py-1.5 bg-[#C69327] rounded-full text-white text-xs sm:text-sm font-semibold mb-4 sm:mb-6 shadow-sm"
             >
               🚗 Car Comparison Tool
             </motion.div>
@@ -2534,7 +2534,7 @@ const CompareCars = () => {
               className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 sm:mb-6"
             >
               Compare Cars{' '}
-              <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">Side by Side</span>
+              <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">Side by Side</span>
             </motion.h1>
 
             <motion.p
@@ -2633,7 +2633,7 @@ const CompareCars = () => {
                   disabled={!car1 || !car2}
                   className={`w-full sm:w-auto sm:min-w-[280px] max-w-full px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg font-bold text-sm sm:text-base transition-all duration-300 ${
                     car1 && car2
-                    ? 'bg-[#fc641c] hover:bg-[#e65a18] text-white shadow-md shadow-orange-500/20' 
+                    ? 'bg-[#C69327] hover:bg-[#A87B1F] text-white shadow-md shadow-orange-500/20' 
                     : 'bg-gray-200 dark:bg-dark-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                 >
@@ -2673,7 +2673,7 @@ const CompareCars = () => {
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className={`rounded-2xl p-8 max-w-md w-full text-center shadow-2xl ${isDark ? 'bg-dark-800' : 'bg-white'}`}>
               <div className="relative w-24 h-24 mx-auto mb-6">
                 <div className={`absolute inset-0 border-4 rounded-full ${isDark ? 'border-dark-600' : 'border-gray-200'}`} />
-                <div className="absolute inset-0 border-4 border-[#fc641c] rounded-full border-t-transparent animate-spin" />
+                <div className="absolute inset-0 border-4 border-[#C69327] rounded-full border-t-transparent animate-spin" />
                 <div className="absolute inset-0 flex items-center justify-center text-3xl">🚗</div>
               </div>
               <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>Analyzing Cars</h3>

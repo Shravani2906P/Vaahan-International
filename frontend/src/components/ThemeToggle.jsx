@@ -130,7 +130,7 @@ const ThemeToggle = () => {
         pointer-events-none
         bg-gradient-to-r
         from-yellow-500/10
-        to-orange-500/10
+        to-yellow-500/10
       " />
     </button>
   )

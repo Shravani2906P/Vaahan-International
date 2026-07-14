@@ -73,7 +73,7 @@ const SearchBar = () => {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'Feature Reviews': return 'bg-blue-100 text-blue-700'
+      case 'Feature Reviews': return 'bg-dark-100 text-dark-700'
       case 'Tech Insights': return 'bg-green-100 text-green-700'
       case 'New Launches': return 'bg-purple-100 text-purple-700'
       default: return 'bg-gray-100 text-gray-700'

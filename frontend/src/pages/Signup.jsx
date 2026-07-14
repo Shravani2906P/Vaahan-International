@@ -63,7 +63,7 @@ const Signup = () => {
     }`}>
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute top-20 right-10 w-72 h-72 bg-yellow-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-orange-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-yellow-500 rounded-full blur-3xl"></div>
       </div>
 
       <div className="w-full max-w-6xl relative z-10">
@@ -71,7 +71,7 @@ const Signup = () => {
           
           {/* Left Side - Illustration */}
           <div className={`hidden lg:flex flex-col items-center justify-center p-12 order-2 ${
-            isDark ? 'bg-dark-900' : 'bg-gradient-to-br from-yellow-50 to-orange-50'
+            isDark ? 'bg-dark-900' : 'bg-gradient-to-br from-yellow-50 to-yellow-100'
           }`}>
             <div className="text-center">
               <div className="text-8xl mb-6 animate-float">🚀</div>
@@ -211,7 +211,7 @@ const Signup = () => {
                   className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all duration-300 ${
                     loading
                       ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5'
+                      : 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5'
                   }`}
                 >
                   {loading ? 'Sending OTP...' : 'Send OTP'}

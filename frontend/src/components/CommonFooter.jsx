@@ -31,15 +31,15 @@ const CommonFooter = () => {
   ]
 
   const socialIcons = [
-    { name: 'LinkedIn', icon: 'in', url: 'https://www.linkedin.com/showcase/dryvsquad/', color: 'hover:bg-blue-700' },
-    { name: 'Instagram', icon: 'ig', url: 'https://www.instagram.com/dryvsquad?igsh=MTBlamx3dzNmajV5&utm_source=qr', color: 'hover:bg-pink-600' },
-    { name: 'Twitter', icon: 'tw', url: '#', color: 'hover:bg-blue-500' },
-    { name: 'Facebook', icon: 'fb', url: '#', color: 'hover:bg-blue-800' },
+      { name: 'LinkedIn', icon: 'in', url: 'https://www.linkedin.com/showcase/dryvsquad/', color: 'hover:bg-dark-700' },
+      { name: 'Instagram', icon: 'ig', url: 'https://www.instagram.com/dryvsquad?igsh=MTBlamx3dzNmajV5&utm_source=qr', color: 'hover:bg-pink-600' },
+      { name: 'Twitter', icon: 'tw', url: '#', color: 'hover:bg-dark-500' },
+      { name: 'Facebook', icon: 'fb', url: '#', color: 'hover:bg-dark-800' },
   ]
 
-  const footerBg = isDark ? '#0f172a' : 'bg-gray-900'
+  const footerBg = isDark ? 'bg-black' : 'bg-black'
   const textColor = isDark ? 'text-gray-300' : 'text-gray-300'
-  const borderColor = isDark ? 'border-dark-700' : 'border-gray-800'
+  const borderColor = isDark ? 'border-zinc-800' : 'border-zinc-800'
   const hoverColor = 'hover:text-yellow-500'
 
   return (
@@ -49,10 +49,10 @@ const CommonFooter = () => {
           <div className="col-span-1 sm:col-span-2 md:col-span-1">
            <Link to="/" className="flex items-center group flex-shrink-0">
               <img
-                src={"/DSLogo-Dark4.png"}
-                alt="Vaahan International"
-                className="h-12 sm:h-14 md:h-16 lg:h-18 w-auto object-contain transition-transform duration-150 group-hover:scale-105"
-                style={{ maxWidth: '300px' }}
+                src={isDark ? "/DSLogo-Dark.png" : "/DSLogo-Light.png"}
+                alt="DryvSquad"
+                className="h-14 sm:h-16 md:h-[72px] lg:h-20 w-auto object-contain transition-transform duration-150 group-hover:scale-105"
+                style={{ maxWidth: '340px' }}
               />
             </Link>
             <p className="text-gray-400 text-xs sm:text-sm mt-3 leading-relaxed max-w-sm">

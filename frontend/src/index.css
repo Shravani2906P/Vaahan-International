@@ -13,35 +13,43 @@
      via ResizeObserver so it always matches the real rendered nav height
      (used by the Home mobile hero to clear the fixed nav). */
   --header-height: 72px;
+  /* Light theme — white surfaces, navy text, mustard gold accent (logo) */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f4f4f5;
   --bg-card: #ffffff;
   --bg-input: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #1e293b;
+  --text-primary: #272e34;
+  --text-secondary: #262b30;
   --text-tertiary: #64748b;
   --text-muted: #94a3b8;
-  --border-primary: #e2e8f0;
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --hover-bg: #f1f5f9;
-  --footer-bg: #111827;
+  --border-primary: #e4e4e7;
+  --shadow-color: rgba(11, 28, 44, 0.08);
+  --hover-bg: #f4f4f5;
+  --footer-bg: #000000;
+  --brand-gold: #C69327;
+  --brand-gold-hover: #A87B1F;
+  --brand-navy: #0B1C2C;
 }
 
 .dark {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --bg-card: #1e293b;
-  --bg-input: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #e2e8f0;
-  --text-tertiary: #94a3b8;
-  --text-muted: #64748b;
-  --border-primary: #334155;
-  --shadow-color: rgba(0, 0, 0, 0.4);
-  --hover-bg: #334155;
-  --footer-bg: #0f172a;
+  /* Dark theme — true black surfaces, silver/white text, gold accent (logo) */
+  --bg-primary: #000000;
+  --bg-secondary: #575757;
+  --bg-tertiary: #181818;
+  --bg-card: #0a0a0a;
+  --bg-input: #0a0a0a;
+  --text-primary: #fafafa;
+  --text-secondary: #e4e4e7;
+  --text-tertiary: #a1a1aa;
+  --text-muted: #71717a;
+  --border-primary: #27272a;
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --hover-bg: #181818;
+  --footer-bg: #000000;
+  --brand-gold: #D4AF37;
+  --brand-gold-hover: #C69327;
+  --brand-navy: #fafafa;
 }
 
 /* ========================================
@@ -199,7 +207,7 @@ a:hover,
   h4 { @apply text-xl md:text-2xl; }
 
   ::selection {
-    @apply bg-yellow-500 text-gray-900;
+    @apply bg-yellow-500 text-black;
   }
 
   ::-webkit-scrollbar {
@@ -230,7 +238,7 @@ a:hover,
   }
 
   .btn-primary {
-    @apply bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold py-3 px-6 rounded-lg transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2;
+    @apply bg-yellow-500 hover:bg-yellow-600 text-brand-navy dark:text-black font-semibold py-3 px-6 rounded-lg transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2;
     transition: 
       background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
       transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
@@ -300,7 +308,7 @@ a:hover,
    ======================================== */
 @layer utilities {
   .text-gradient {
-    @apply bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent;
   }
 
   /* Responsive text sizes */

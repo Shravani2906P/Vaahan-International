@@ -51,7 +51,7 @@ const Signin = () => {
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none pt-20">
         <div className="absolute top-20 left-10 w-72 h-72 bg-yellow-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-yellow-500 rounded-full blur-3xl"></div>
       </div>
 
       <div className="w-full max-w-5xl relative z-10">
@@ -59,7 +59,7 @@ const Signin = () => {
           
           {/* Left Side - Illustration */}
           <div className={`hidden lg:flex flex-col items-center justify-center p-10 ${
-            isDark ? 'bg-dark-900' : 'bg-gradient-to-br from-yellow-50 to-orange-50'
+            isDark ? 'bg-dark-900' : 'bg-gradient-to-br from-yellow-50 to-yellow-100'
           }`}>
             <div className="text-center">
               <div className="text-7xl mb-6 animate-float">🚗</div>

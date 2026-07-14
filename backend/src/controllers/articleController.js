@@ -11,6 +11,9 @@ Copyright : (c) 2026 Vaahan International. All rights reserved.
 */
 
 const Article = require('../models/Article');
+const {
+  getTopArticlesByCategory: fetchTopArticlesByCategory,
+} = require('../services/topArticlesByCategory');
 
 // ========================================
 // GET /api/articles - Get all published articles
@@ -169,6 +172,29 @@ exports.getFeaturedArticles = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch featured articles',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    });
+  }
+};
+
+// ========================================
+// GET /api/articles/top-by-category - Top N articles per category by views
+// ========================================
+exports.getTopArticlesByCategory = async (req, res) => {
+  try {
+    const limitPerCategory = parseInt(req.query.limit, 10) || 5;
+    const categories = await fetchTopArticlesByCategory({ limitPerCategory });
+
+    res.status(200).json({
+      success: true,
+      count: categories.length,
+      categories,
+    });
+  } catch (error) {
+    console.error('❌ Get top articles by category error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch top articles by category',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }

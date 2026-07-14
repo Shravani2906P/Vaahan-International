@@ -198,8 +198,8 @@ export const featuresData = {
     description: 'AI-powered safety systems that use cameras and sensors to assist, warn, and protect drivers.',
     icon: '🤖',
     color: 'blue',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-600',
+    bgColor: 'bg-dark-50',
+    textColor: 'text-dark-600',
     features: [
       {
         id: 'aeb',
