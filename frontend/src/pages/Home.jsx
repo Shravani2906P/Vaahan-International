@@ -575,9 +575,10 @@ const Home = () => {
     <>
       <SkeletonStyles />
       {renderHero()}
+      
 
-      <section className={`transition-colors duration-150 border-b ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-gray-50 border-gray-100'} pb-6 md:pb-10`}>
-        {renderSearchSection()}
+      <section className={`transition-colors duration-150 border-b ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-gray-50 border-gray-100'} pt-6 pb-6 md:pb-10`}>
+        {/* {renderSearchSection()} */}
         {renderStatsCards()}
       </section>
 

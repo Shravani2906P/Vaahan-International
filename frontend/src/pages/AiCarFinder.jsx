@@ -578,7 +578,7 @@ const AiCarFinder = () => {
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 text-2xl font-bold text-yellow-500 uppercase tracking-wider">
             <Sparkles className="w-4.5 h-4.5" />
-            AI Car Matchmaker
+            Personalised Car Suggestions
           </div>
           <p className={`text-sm sm:text-base max-w-xl mx-auto leading-relaxed ${
             isDark ? 'text-gray-400' : 'text-slate-500'
